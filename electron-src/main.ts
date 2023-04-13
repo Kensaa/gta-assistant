@@ -1,11 +1,10 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import * as nut from '@nut-tree/nut-js'
 import * as path from 'path'
-
-let win: BrowserWindow
 
 interface ToggleButton {
     id: string
-    type: 'toggleButton'
+    type: 'toggleButton' | 'aaaa'
     defaultState?: boolean
     enabledText: string
     disabledText: string
@@ -62,6 +61,18 @@ const subModulesState = {
     cayoFingerprint: false
 }
 
+let win: BrowserWindow
+
+function isResolutionSupported(width: number, height: number) {
+    const supportedResolution = [[1920, 1080]]
+    for (const res of supportedResolution) {
+        if (res[0] == width && res[1] == height) {
+            return true
+        }
+    }
+    return false
+}
+
 async function createWindow() {
     win = new BrowserWindow({
         title: 'GTA 5 Assistant',
@@ -74,7 +85,15 @@ async function createWindow() {
             contextIsolation: false
         }
     })
-
+    const width = await nut.screen.width()
+    const height = await nut.screen.height()
+    if (!isResolutionSupported(width, height)) {
+        dialog.showErrorBox(
+            'Resolution not supported',
+            'The resolution of the screen is not currently supported\nBe sure to spam me on Discord : Kensa#4948'
+        )
+        process.exit(0)
+    }
     if (app.isPackaged) {
         await win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
     } else {
