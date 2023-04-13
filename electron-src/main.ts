@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import * as nut from '@nut-tree/nut-js'
 import * as path from 'path'
+import { fork, ChildProcess } from 'child_process'
 
 interface ToggleButton {
     id: string
@@ -30,11 +31,13 @@ const buttons: Button[][] = [
             disabledText: 'enable fingerprints (casino)',
             enable: () => {
                 console.log('enabling casino')
-                subModulesState['casinoFingerprint'] = true
+                subProcessesInstances['casinoFingerprint'] = fork(
+                    path.join(__dirname, 'casino.js')
+                )
             },
             disable: () => {
                 console.log('disabling casino')
-                subModulesState['casinoFingerprint'] = false
+                subProcessesInstances['casinoFingerprint'].kill('SIGTERM')
             }
         },
         {
@@ -44,11 +47,13 @@ const buttons: Button[][] = [
             disabledText: 'enable fingerprints (cayo)',
             enable: () => {
                 console.log('enabling cayo')
-                subModulesState['cayoFingerprint'] = true
+                subProcessesInstances['cayoFingerprint'] = fork(
+                    path.join(__dirname, 'cayo.js')
+                )
             },
             disable: () => {
                 console.log('disabling cayo')
-                subModulesState['cayoFingerprint'] = false
+                subProcessesInstances['cayoFingerprint'].kill('SIGTERM')
             }
         }
     ],
@@ -56,10 +61,7 @@ const buttons: Button[][] = [
     []
 ]
 
-const subModulesState = {
-    casinoFingerprint: false,
-    cayoFingerprint: false
-}
+const subProcessesInstances: Record<string, ChildProcess> = {}
 
 let win: BrowserWindow
 
