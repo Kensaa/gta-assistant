@@ -95,7 +95,7 @@ async function loadFingerprintParts(count: number): Promise<jimp[][]> {
     const fingerprints = await loadFingerprints(FINGERPRINT_COUNT)
     const fingerprintsParts = await loadFingerprintParts(FINGERPRINT_COUNT)
 
-    console.log('waiting for fingerprint ...')
+    console.log('waiting for casino fingerprint ...')
 
     while (true) {
         const headerScreenshot = await screen(HEADER_POS)
