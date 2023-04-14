@@ -88,9 +88,6 @@ async function loadFingerprintParts(count: number): Promise<jimp[][]> {
 }
 
 ;(async () => {
-    const width = await nut.screen.width()
-    const height = await nut.screen.height()
-
     const headerIMG = await jimp.read(
         path.join(__dirname, '..', 'assets', 'casino', 'header.png')
     )
@@ -98,69 +95,63 @@ async function loadFingerprintParts(count: number): Promise<jimp[][]> {
     const fingerprints = await loadFingerprints(FINGERPRINT_COUNT)
     const fingerprintsParts = await loadFingerprintParts(FINGERPRINT_COUNT)
 
-    if (width == 1920 && height == 1080) {
-        console.log('waiting for fingerprint ...')
+    console.log('waiting for fingerprint ...')
 
-        while (true) {
-            const headerScreenshot = await screen(HEADER_POS)
-            // check for hacking
-            if (imageSimilarity(headerScreenshot, headerIMG) < 0.1) {
-                // screen the fingerprint on the right
-                const fingerprintScreenshot = await screen(FINGERPRINT_POS)
-                // compare it with all known fingerprints
-                const similarities = fingerprints.map(e =>
-                    imageSimilarity(fingerprintScreenshot, e)
-                )
-                // get the index of the most similar
-                const fingerprintIndex = minIndex(similarities)
-                // get all the parts to check on the left
-                const solutions = fingerprintsParts[fingerprintIndex]
-                console.log('fingerprint detected : ', fingerprintIndex + 1)
-                // screen all parts on the left
-                const parts_screenshots = await Promise.all(
-                    PARTS_POS.map(e => screen(e))
-                )
+    while (true) {
+        const headerScreenshot = await screen(HEADER_POS)
+        // check for hacking
+        if (imageSimilarity(headerScreenshot, headerIMG) < 0.1) {
+            // screen the fingerprint on the right
+            const fingerprintScreenshot = await screen(FINGERPRINT_POS)
+            // compare it with all known fingerprints
+            const similarities = fingerprints.map(e =>
+                imageSimilarity(fingerprintScreenshot, e)
+            )
+            // get the index of the most similar
+            const fingerprintIndex = minIndex(similarities)
+            // get all the parts to check on the left
+            const solutions = fingerprintsParts[fingerprintIndex]
+            console.log('fingerprint detected : ', fingerprintIndex + 1)
+            // screen all parts on the left
+            const parts_screenshots = await Promise.all(
+                PARTS_POS.map(e => screen(e))
+            )
 
-                // get the position of the solutions in all the parts on the left
-                // (this is because parts position are randomized)
-                const positions: number[] = []
-                for (const solution of solutions) {
-                    let i = 0
-                    let minI = 0
-                    let minV = 1
-                    for (const screenshot of parts_screenshots) {
-                        if (!positions.includes(i)) {
-                            const s = imageSimilarity(solution, screenshot)
-                            if (s < minV) {
-                                minV = s
-                                minI = i
-                            }
+            // get the position of the solutions in all the parts on the left
+            // (this is because parts position are randomized)
+            const positions: number[] = []
+            for (const solution of solutions) {
+                let i = 0
+                let minI = 0
+                let minV = 1
+                for (const screenshot of parts_screenshots) {
+                    if (!positions.includes(i)) {
+                        const s = imageSimilarity(solution, screenshot)
+                        if (s < minV) {
+                            minV = s
+                            minI = i
                         }
-                        i++
                     }
-                    positions.push(minI)
+                    i++
                 }
-                // we sort those position to get them in order, making the movements easier
-                positions.sort()
-                // store position as the numberof moves from the previous element to again make the movements easier
-                const relativePositions = relativeArray(positions)
-
-                // press the keys
-                for (const move of relativePositions) {
-                    for (let i = 0; i < move; i++) {
-                        await press(Key.Right)
-                    }
-                    await press(Key.Enter)
-                }
-                await press(Key.Tab)
-                console.log('validating')
-                await wait(4350 - 1000 / UPDATE_RATE)
+                positions.push(minI)
             }
-            await wait(1000 / UPDATE_RATE)
+            // we sort those position to get them in order, making the movements easier
+            positions.sort()
+            // store position as the numberof moves from the previous element to again make the movements easier
+            const relativePositions = relativeArray(positions)
+
+            // press the keys
+            for (const move of relativePositions) {
+                for (let i = 0; i < move; i++) {
+                    await press(Key.Right)
+                }
+                await press(Key.Enter)
+            }
+            await press(Key.Tab)
+            console.log('validating')
+            await wait(4350 - 1000 / UPDATE_RATE)
         }
-    } else {
-        console.error('screen size not supported')
-        await wait(5000)
-        process.exit(0)
+        await wait(1000 / UPDATE_RATE)
     }
 })()
