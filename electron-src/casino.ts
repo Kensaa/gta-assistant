@@ -1,8 +1,14 @@
 import * as jimp from 'jimp'
-import * as nut from '@nut-tree/nut-js'
 import { Key } from '@nut-tree/nut-js'
 import * as path from 'path'
-import { screen, imageSimilarity, relativeArray, press, wait } from './utils'
+import {
+    screen,
+    imageSimilarity,
+    relativeArray,
+    press,
+    wait,
+    minIndex
+} from './utils'
 
 const UPDATE_RATE = 10
 const FINGERPRINT_COUNT = 4
@@ -19,19 +25,6 @@ const PARTS_POS = [
     [475, 702, 595, 823],
     [618, 702, 738, 823]
 ]
-
-/**
- * returns the index of the smallest element of the array
- * @param array the input array
- * @returns the index
- */
-function minIndex(array: number[]): number {
-    let min = 0
-    for (let i = 0; i < array.length; i++) {
-        if (array[i] < array[min]) min = i
-    }
-    return min
-}
 
 /**
  * load the fill images of a number of fingerprints
@@ -67,7 +60,7 @@ async function loadFingerprintParts(count: number): Promise<jimp[][]> {
     for (let index = 0; index < count; index++) {
         res.push(
             await Promise.all(
-                new Array(4) // beacause there is 4 parts to check per fingerprint
+                new Array(4) // because there is 4 parts to check per fingerprint
                     .fill(0)
                     .map((_, i) =>
                         jimp.read(

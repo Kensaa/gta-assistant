@@ -74,3 +74,16 @@ export function relativeArray(array: number[]): number[] {
     }
     return res
 }
+
+/**
+ * returns the index of the smallest element of the array
+ * @param array the input array
+ * @returns the index
+ */
+export function minIndex(array: number[]): number {
+    let min = 0
+    for (let i = 0; i < array.length; i++) {
+        if (array[i] < array[min]) min = i
+    }
+    return min
+}
