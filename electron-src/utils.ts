@@ -12,9 +12,8 @@ nut.keyboard.config.autoDelayMs = 20
  */
 export async function screen(bound: number[]) {
     const [x1, y1, x2, y2] = bound
-    const rawScreen = await nut.screen.grabRegion(
-        new Region(x1, y1, x2 - x1, y2 - y1)
-    )
+    const region = new Region(x1, y1, x2 - x1, y2 - y1)
+    const rawScreen = await nut.screen.grabRegion(region)
     const pngBuffer = await sharp(rawScreen.data, {
         raw: {
             width: rawScreen.width,
@@ -24,7 +23,6 @@ export async function screen(bound: number[]) {
     })
         .png()
         .toBuffer()
-
     return jimp.read(pngBuffer)
 }
 

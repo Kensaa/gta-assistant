@@ -10,7 +10,7 @@ const FINGERPRINT_COUNT = 7
 
 const PARTS_POS = [
     [415, 357, 820, 416],
-    [415, 433, 820, 359],
+    [415, 433, 820, 493],
     [415, 509, 820, 570],
     [415, 585, 820, 645],
     [415, 661, 820, 721],
@@ -106,13 +106,17 @@ async function loadFingerprintParts(count: number): Promise<jimp[][]> {
                     //move left
                     for (let j = 0; j < moveCount; j++) {
                         await press(nut.Key.Left)
+                        await wait(50)
                     }
                 } else {
-                    //move left
+                    //move right
                     for (let j = 0; j < Math.abs(moveCount); j++) {
                         await press(nut.Key.Right)
+                        await wait(50)
                     }
                 }
+                await press(nut.Key.Down)
+                await wait(50)
             }
             await wait(5000)
         }
