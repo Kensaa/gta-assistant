@@ -7,9 +7,7 @@
     "scripts": {
         "dev": "vite",
         "build": "tsc && vite build",
-        "preview": "vite preview",
-        "casino": "tsc && node dist-electron/casino.js",
-        "cayo": "tsc && node dist-electron/cayo.js"
+        "preview": "vite preview"
     },
     "dependencies": {
         "@nut-tree/nut-js": "^3.1.1",
