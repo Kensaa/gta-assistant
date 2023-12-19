@@ -85,6 +85,10 @@ async function loadFingerprintParts(count: number): Promise<jimp[][]> {
     while (true) {
         const headerScreenshot = await screen(HEADER_POS)
         if (imageSimilarity(headerScreenshot, headerIMG) < 0.1) {
+            ;(await screen([0, 0, 1920, 1080])).writeAsync(
+                path.join(__dirname, '..', 'out', 'fullscreen.png')
+            )
+
             const fingerprintScreenshot = await screen(FINGERPRINT_POS)
 
             const similarities = fingerprints.map(e =>
@@ -100,24 +104,30 @@ async function loadFingerprintParts(count: number): Promise<jimp[][]> {
                     fingerprintIndex
                 ].map(e => imageSimilarity(currentPartScreen, e))
                 const currentPartIndex = minIndex(partSimilarities)
+                console.log('part n°' + i + ' : ' + currentPartIndex)
 
-                const moveCount = currentPartIndex - i
+                /*const moveCount = currentPartIndex - i
+                console.log('move : ' + moveCount)
                 if (moveCount > 0) {
                     //move left
+                    console.log('moving left')
                     for (let j = 0; j < moveCount; j++) {
                         await press(nut.Key.Left)
                         await wait(50)
                     }
                 } else {
                     //move right
+                    console.log('moving right')
                     for (let j = 0; j < Math.abs(moveCount); j++) {
                         await press(nut.Key.Right)
                         await wait(50)
                     }
                 }
+                console.log('going down')
                 await press(nut.Key.Down)
-                await wait(50)
+                await wait(50)*/
             }
+            console.log('finished')
             await wait(5000)
         }
         await wait(1000 / UPDATE_RATE)

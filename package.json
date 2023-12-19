@@ -6,7 +6,7 @@
     "main": "dist-electron/main.js",
     "scripts": {
         "dev": "vite",
-        "build": "tsc && vite build",
+        "build": "rm -r -f release && yarn && tsc && vite build && electron-builder --x64 -wl && rm -r dist-electron && rm -r dist",
         "preview": "vite preview"
     },
     "dependencies": {
@@ -28,5 +28,39 @@
         "vite": "^4.2.0",
         "vite-electron-plugin": "^0.8.2",
         "vite-plugin-electron-renderer": "^0.13.14"
+    },
+    "build": {
+        "appId": "fr.kensa.gtaAssistant",
+        "productName": "GTA Assistant",
+        "directories": {
+            "output": "release"
+        },
+        "files": [
+            "dist-electron/**/*",
+            "dist/**/*"
+        ],
+        "mac": {
+            "target": "dmg"
+        },
+        "linux": {
+            "target": {
+                "target": "zip",
+                "arch": "x64"
+            },
+            "category": "Game"
+        },
+        "win": {
+            "target": [
+                {
+                    "target": "msi",
+                    "arch": "x64"
+                },
+                {
+                    "target": "portable",
+                    "arch": "x64"
+                }
+            ],
+            "publisherName": "Kensa"
+        }
     }
 }
