@@ -33,11 +33,13 @@
         "appId": "fr.kensa.gtaAssistant",
         "productName": "GTA Assistant",
         "directories": {
-            "output": "release"
+            "output": "release",
+            "buildResources": "buildAssets"
         },
         "files": [
             "dist-electron/**/*",
-            "dist/**/*"
+            "dist/**/*",
+            "assets/**/*"
         ],
         "mac": {
             "target": "dmg"
@@ -51,10 +53,6 @@
         },
         "win": {
             "target": [
-                {
-                    "target": "msi",
-                    "arch": "x64"
-                },
                 {
                     "target": "portable",
                     "arch": "x64"
