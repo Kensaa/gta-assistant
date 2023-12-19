@@ -1,5 +1,7 @@
 {
     "name": "gta-assistant",
+    "description": "A software that does for you all the boring things in GTA 5",
+    "author": "Kensa",
     "private": true,
     "version": "0.0.0",
     "license": "MIT",
