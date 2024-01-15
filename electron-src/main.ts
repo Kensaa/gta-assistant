@@ -5,7 +5,7 @@ import { fork, ChildProcess } from 'child_process'
 
 interface ToggleButton {
     id: string
-    type: 'toggleButton' | 'aaaa'
+    type: 'toggleButton' | 'toggleButton'
     defaultState?: boolean
     enabledText: string
     disabledText: string
@@ -76,6 +76,7 @@ function isResolutionSupported(width: number, height: number) {
 }
 
 async function createWindow() {
+    console.log(path.join(__dirname))
     win = new BrowserWindow({
         title: 'GTA 5 Assistant',
         width: 550,
@@ -134,8 +135,7 @@ ipcMain.on('getButtons', (event, args) => {
 })
 
 ipcMain.on('toggleButton', (event, args) => {
-    const id = args[0]
-    const action = args[1]
+    const [id, action] = args
 
     const button = buttons.flat().find(btn => btn.id == id)
     if (!button || button.type != 'toggleButton') {
