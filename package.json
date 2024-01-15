@@ -3,7 +3,7 @@
     "description": "A software that does for you all the boring things in GTA 5",
     "author": "Kensa",
     "private": true,
-    "version": "1.0.0",
+    "version": "1.0.1",
     "license": "MIT",
     "main": "dist-electron/main.js",
     "scripts": {
@@ -57,6 +57,10 @@
             "target": [
                 {
                     "target": "portable",
+                    "arch": "x64"
+                },
+                {
+                    "target": "msi",
                     "arch": "x64"
                 }
             ],
