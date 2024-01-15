@@ -85,3 +85,21 @@ export function minIndex(array: number[]): number {
     }
     return min
 }
+
+export function findImgInArray(img: jimp, array: jimp[], minTreshold = 0.1) {
+    let currentImgIndex = 0
+    let currentImgSimilarity = 1
+    let imgCount = array.length
+    for (let index = 0; index < imgCount; index++) {
+        const part = array[index]
+        const similarity = imageSimilarity(img, part)
+        if (similarity < currentImgSimilarity) {
+            currentImgSimilarity = similarity
+            currentImgIndex = index
+        }
+        if (similarity < minTreshold) {
+            break
+        }
+    }
+    return [currentImgSimilarity, currentImgIndex]
+}
