@@ -112,7 +112,8 @@ jobs:
               with:
                   files: |
                       release/GTA Assistant ${{steps.version.outputs.version}}.exe
-                      release/gta-assistant${{steps.version.outputs.version}}.zip
+                      release/GTA Assistant ${{steps.version.outputs.version}}.msi
+                      release/gta-assistant-${{steps.version.outputs.version}}.zip
                   draft: false
                   prerelease: false
                   tag_name: ${{ needs.version-check.outputs.current-version }}
