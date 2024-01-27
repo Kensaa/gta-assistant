@@ -34,6 +34,11 @@
     "build": {
         "appId": "fr.kensa.gtaAssistant",
         "productName": "GTA Assistant",
+        "asar": true,
+        "asarUnpack": [
+            "**/node_modules/sharp/**/*",
+            "**/node_modules/@img/**/*"
+        ],
         "directories": {
             "output": "release",
             "buildResources": "buildAssets"
