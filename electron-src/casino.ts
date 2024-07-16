@@ -173,7 +173,7 @@ async function loadFingerprintParts(
 
 async function screenGrabber() {
     const [width, height] = await getScreenSize()
-    const headerIMG = await jimp.read(
+    /*const headerIMG = await jimp.read(
         path.join(
             __dirname,
             '..',
@@ -182,7 +182,7 @@ async function screenGrabber() {
             'casino',
             'header.png'
         )
-    )
+    )*/
     const HEADER_POS = CASINO_HEADER_POS[height]
     const FINGERPRINT_POS = CASINO_FINGERPRINT_POS[height]
     const PARTS_POS = CASINO_PARTS_POS[height]
@@ -195,11 +195,20 @@ async function screenGrabber() {
             path.join(outPath, 'screen.png')
         )
         const currentOutputFolder = path.join(outPath, count + '')
+        if (fs.existsSync(currentOutputFolder)) {
+            count++
+            continue
+        }
         fs.mkdirSync(currentOutputFolder)
 
         const fingerprintScreen = await screen(FINGERPRINT_POS)
         await fingerprintScreen.writeAsync(
             path.join(currentOutputFolder, 'full.png')
+        )
+
+        const headerScreen = await screen(HEADER_POS)
+        await headerScreen.writeAsync(
+            path.join(currentOutputFolder, 'header.png')
         )
 
         for (let i = 0; i < PARTS_POS.length; i++) {

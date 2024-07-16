@@ -66,7 +66,10 @@ const subProcessesInstances: Record<string, ChildProcess> = {}
 let win: BrowserWindow
 
 function isResolutionSupported(width: number, height: number) {
-    const supportedResolution = [[1920, 1080]]
+    const supportedResolution = [
+        [1920, 1080],
+        [2560, 1440]
+    ]
     for (const res of supportedResolution) {
         if (res[0] == width && res[1] == height) {
             return true
