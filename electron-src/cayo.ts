@@ -1,32 +1,33 @@
 import * as jimp from 'jimp'
-import * as nut from '@nut-tree/nut-js'
+import * as nut from '@nut-tree-fork/nut-js'
 import * as path from 'path'
 import * as fs from 'fs'
-import { screen, imageSimilarity, press, wait, findImgInArray } from './utils'
+import {
+    screen,
+    imageSimilarity,
+    press,
+    wait,
+    findImgInArray,
+    getScreenSize
+} from './utils'
+import {
+    UPDATE_RATE,
+    CAYO_FINGERPRINT_COUNT,
+    CAYO_FINGERPRINT_POS,
+    CAYO_HEADER_POS,
+    CAYO_PARTS_POS,
+    MOVE_DELAY
+} from './constants'
 
-const UPDATE_RATE = 10
-const HEADER_POS = [449, 60, 1661, 127]
-const FINGERPRINT_POS = [905, 321, 1565, 979]
-const FINGERPRINT_COUNT = 7
-
-const PARTS_POS = [
-    [413, 357, 820, 417],
-    [413, 433, 820, 493],
-    [413, 509, 820, 569],
-    [413, 585, 820, 645],
-    [413, 661, 820, 721],
-    [413, 737, 820, 797],
-    [413, 813, 820, 873],
-    [413, 889, 820, 949]
-]
-
-const MOVE_DELAY = 10
 /**
  * load the full images of a number of fingerprints
  * @param count number of fingerprint
  * @returns an array of images
  */
-async function loadFingerprints(count: number): Promise<jimp[]> {
+async function loadFingerprints(
+    count: number,
+    height: number
+): Promise<jimp[]> {
     return await Promise.all(
         new Array(count)
             .fill(0)
@@ -36,6 +37,7 @@ async function loadFingerprints(count: number): Promise<jimp[]> {
                         __dirname,
                         '..',
                         'assets',
+                        height + '',
                         'cayo',
                         `${i + 1}`,
                         'fingerprint.png'
@@ -50,7 +52,10 @@ async function loadFingerprints(count: number): Promise<jimp[]> {
  * @param count number of fingerprint
  * @returns an array of array of images
  */
-async function loadFingerprintParts(count: number): Promise<jimp[][]> {
+async function loadFingerprintParts(
+    count: number,
+    height: number
+): Promise<jimp[][]> {
     let res: jimp[][] = []
     for (let index = 0; index < count; index++) {
         res.push(
@@ -63,6 +68,7 @@ async function loadFingerprintParts(count: number): Promise<jimp[][]> {
                                 __dirname,
                                 '..',
                                 'assets',
+                                height + '',
                                 'cayo',
                                 `${index + 1}`,
                                 `${i + 1}.png`
@@ -76,12 +82,21 @@ async function loadFingerprintParts(count: number): Promise<jimp[][]> {
 }
 
 ;(async () => {
+    const [_, height] = await getScreenSize()
+
     const headerIMG = await jimp.read(
-        path.join(__dirname, '..', 'assets', 'cayo', 'header.png')
+        path.join(__dirname, '..', 'assets', height + '', 'cayo', 'header.png')
     )
 
-    const fingerprints = await loadFingerprints(FINGERPRINT_COUNT)
-    const fingerprintsParts = await loadFingerprintParts(FINGERPRINT_COUNT)
+    const FINGERPRINT_POS = CAYO_FINGERPRINT_POS[height]
+    const PARTS_POS = CAYO_PARTS_POS[height]
+    const HEADER_POS = CAYO_HEADER_POS[height]
+
+    const fingerprints = await loadFingerprints(CAYO_FINGERPRINT_COUNT, height)
+    const fingerprintsParts = await loadFingerprintParts(
+        CAYO_FINGERPRINT_COUNT,
+        height
+    )
 
     console.log('waiting for cayo fingerprint ...')
 
@@ -177,10 +192,16 @@ async function moveTo(current: number, target: number) {
     }
 }
 
-async function screenGraber() {
+async function screenGrabber() {
+    const [_, height] = await getScreenSize()
+    const HEADER_POS = CAYO_HEADER_POS[height]
+    const FINGERPRINT_POS = CAYO_FINGERPRINT_POS[height]
+    const PARTS_POS = CAYO_PARTS_POS[height]
+
     const outPath = path.join(__dirname, '..', 'out', 'cayoScreenshots')
+
     const headerIMG = await jimp.read(
-        path.join(__dirname, '..', 'assets', 'cayo', 'header.png')
+        path.join(__dirname, '..', 'assets', height + '', 'cayo', 'header.png')
     )
     while (true) {
         const headerScreenshot = await screen(HEADER_POS)

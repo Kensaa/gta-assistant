@@ -1,37 +1,34 @@
 import * as jimp from 'jimp'
-import { Key } from '@nut-tree/nut-js'
+import { Key } from '@nut-tree-fork/nut-js'
 import * as path from 'path'
+import * as fs from 'fs'
 import {
     screen,
     imageSimilarity,
     relativeArray,
     press,
     wait,
-    minIndex
+    minIndex,
+    getScreenSize
 } from './utils'
 
-const UPDATE_RATE = 10
-const FINGERPRINT_COUNT = 4
-const HEADER_POS = [370, 90, 1550, 120]
-const FINGERPRINT_POS = [974, 157, 1320, 685]
-
-const PARTS_POS = [
-    [475, 271, 595, 391],
-    [618, 271, 738, 391],
-    [475, 414, 595, 535],
-    [618, 414, 738, 535],
-    [475, 558, 595, 680],
-    [618, 558, 738, 680],
-    [475, 702, 595, 823],
-    [618, 702, 738, 823]
-]
+import {
+    CASINO_FINGERPRINT_COUNT,
+    CASINO_HEADER_POS,
+    CASINO_FINGERPRINT_POS,
+    CASINO_PARTS_POS,
+    UPDATE_RATE
+} from './constants'
 
 /**
  * load the fill images of a number of fingerprints
  * @param count number of fingerprint
  * @returns an array of images
  */
-async function loadFingerprints(count: number): Promise<jimp[]> {
+async function loadFingerprints(
+    count: number,
+    height: number
+): Promise<jimp[]> {
     return await Promise.all(
         new Array(count)
             .fill(0)
@@ -41,6 +38,7 @@ async function loadFingerprints(count: number): Promise<jimp[]> {
                         __dirname,
                         '..',
                         'assets',
+                        height + '',
                         'casino',
                         `${i + 1}`,
                         'full.png'
@@ -55,7 +53,10 @@ async function loadFingerprints(count: number): Promise<jimp[]> {
  * @param count number of fingerprint
  * @returns an array of array of images
  */
-async function loadFingerprintParts(count: number): Promise<jimp[][]> {
+async function loadFingerprintParts(
+    count: number,
+    height: number
+): Promise<jimp[][]> {
     let res: jimp[][] = []
     for (let index = 0; index < count; index++) {
         res.push(
@@ -68,6 +69,7 @@ async function loadFingerprintParts(count: number): Promise<jimp[][]> {
                                 __dirname,
                                 '..',
                                 'assets',
+                                height + '',
                                 'casino',
                                 `${index + 1}`,
                                 `${i + 1}.png`
@@ -81,12 +83,31 @@ async function loadFingerprintParts(count: number): Promise<jimp[][]> {
 }
 
 ;(async () => {
+    const [_, height] = await getScreenSize()
+
+    const HEADER_POS = CASINO_HEADER_POS[height]
+    const FINGERPRINT_POS = CASINO_FINGERPRINT_POS[height]
+    const PARTS_POS = CASINO_PARTS_POS[height]
+
     const headerIMG = await jimp.read(
-        path.join(__dirname, '..', 'assets', 'casino', 'header.png')
+        path.join(
+            __dirname,
+            '..',
+            'assets',
+            height + '',
+            'casino',
+            'header.png'
+        )
     )
 
-    const fingerprints = await loadFingerprints(FINGERPRINT_COUNT)
-    const fingerprintsParts = await loadFingerprintParts(FINGERPRINT_COUNT)
+    const fingerprints = await loadFingerprints(
+        CASINO_FINGERPRINT_COUNT,
+        height
+    )
+    const fingerprintsParts = await loadFingerprintParts(
+        CASINO_FINGERPRINT_COUNT,
+        height
+    )
 
     console.log('waiting for casino fingerprint ...')
 
@@ -147,4 +168,48 @@ async function loadFingerprintParts(count: number): Promise<jimp[][]> {
         }
         await wait(1000 / UPDATE_RATE)
     }
+    // await screenGrabber()
 })()
+
+async function screenGrabber() {
+    const [width, height] = await getScreenSize()
+    const headerIMG = await jimp.read(
+        path.join(
+            __dirname,
+            '..',
+            'assets',
+            height + '',
+            'casino',
+            'header.png'
+        )
+    )
+    const HEADER_POS = CASINO_HEADER_POS[height]
+    const FINGERPRINT_POS = CASINO_FINGERPRINT_POS[height]
+    const PARTS_POS = CASINO_PARTS_POS[height]
+
+    const outPath = path.join(__dirname, '..', 'out', 'casinoScreenshots')
+
+    let count = 1
+    while (true) {
+        ;(await screen([0, 0, width, height])).writeAsync(
+            path.join(outPath, 'screen.png')
+        )
+        const currentOutputFolder = path.join(outPath, count + '')
+        fs.mkdirSync(currentOutputFolder)
+
+        const fingerprintScreen = await screen(FINGERPRINT_POS)
+        await fingerprintScreen.writeAsync(
+            path.join(currentOutputFolder, 'full.png')
+        )
+
+        for (let i = 0; i < PARTS_POS.length; i++) {
+            const partScreen = await screen(PARTS_POS[i])
+            await partScreen.writeAsync(
+                path.join(currentOutputFolder, `${i + 1}.png`)
+            )
+        }
+
+        count++
+        await wait(2000)
+    }
+}

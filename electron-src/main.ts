@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
-import * as nut from '@nut-tree/nut-js'
 import * as path from 'path'
 import { fork, ChildProcess } from 'child_process'
+import { getScreenSize } from './utils'
 
 interface ToggleButton {
     id: string
@@ -88,8 +88,8 @@ async function createWindow() {
             contextIsolation: false
         }
     })
-    const width = await nut.screen.width()
-    const height = await nut.screen.height()
+    const [width, height] = await getScreenSize()
+    console.log(width, height)
     if (!isResolutionSupported(width, height)) {
         dialog.showErrorBox(
             'Resolution not supported',

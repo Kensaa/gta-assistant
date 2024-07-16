@@ -1,7 +1,7 @@
 import sharp from 'sharp'
 import * as jimp from 'jimp'
-import * as nut from '@nut-tree/nut-js'
-import { Key, Region } from '@nut-tree/nut-js'
+import * as nut from '@nut-tree-fork/nut-js'
+import { Key, Region } from '@nut-tree-fork/nut-js'
 
 nut.keyboard.config.autoDelayMs = 20
 
@@ -102,4 +102,8 @@ export function findImgInArray(img: jimp, array: jimp[], minTreshold = 0.1) {
         }
     }
     return [currentImgSimilarity, currentImgIndex]
+}
+
+export async function getScreenSize() {
+    return [await nut.screen.width(), await nut.screen.height()]
 }
