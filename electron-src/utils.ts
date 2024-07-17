@@ -3,7 +3,7 @@ import * as jimp from 'jimp'
 import * as nut from '@nut-tree-fork/nut-js'
 import { Key, Region } from '@nut-tree-fork/nut-js'
 
-nut.keyboard.config.autoDelayMs = 20
+nut.keyboard.config.autoDelayMs = 30
 
 /**
  * take a screenshot of a certain region
