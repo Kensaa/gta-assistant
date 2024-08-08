@@ -1,7 +1,7 @@
 import { PropsWithChildren, useEffect, useState } from 'react'
 import Button from './components/ToggleButton'
 import ToggleButton from './components/ToggleButton'
-import { invoke } from '@tauri-apps/api/tauri'
+import { invoke } from '@tauri-apps/api/core'
 
 interface ToggleButton {
     id: string

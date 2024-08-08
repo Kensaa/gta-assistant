@@ -1,10 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use serde::{
-    ser::{SerializeMap, SerializeStruct},
-    Deserialize, Serialize,
-};
+use serde::Serialize;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -112,8 +109,9 @@ fn main() {
         running_threads: Mutex::new(HashMap::new()),
         buttons,
     };
-
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
         .manage(state)
         .invoke_handler(tauri::generate_handler![get_buttons])
         .run(tauri::generate_context!())
