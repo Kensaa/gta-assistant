@@ -1,5 +1,4 @@
-import React, { PropsWithChildren, useEffect, useState } from 'react'
-import { ipcRenderer } from 'electron'
+import { PropsWithChildren, useState } from 'react'
 import Button from './components/ToggleButton'
 import ToggleButton from './components/ToggleButton'
 
