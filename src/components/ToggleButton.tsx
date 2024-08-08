@@ -1,24 +1,22 @@
 import React, { PropsWithChildren, ReactElement, useState } from 'react'
-import { ipcRenderer } from 'electron'
-import Button from 'react-bootstrap/Button'
 
 export interface ButtonProps {
     id: string
     defaultState?: boolean
-    enabledText: string
-    disabledText: string
+    enabled_text: string
+    disabled_text: string
 }
 
 export default function ToggleButton({
     id,
     defaultState = false,
-    enabledText,
-    disabledText
+    enabled_text,
+    disabled_text
 }: ButtonProps) {
     const [state, setState] = useState(defaultState)
     const handleClick = () => {
         console.log('clicked')
-        ipcRenderer.send('toggleButton', [id, !state])
+        // ipcRenderer.send('toggleButton', [id, !state])
         setState(!state)
     }
     return (
@@ -28,8 +26,29 @@ export default function ToggleButton({
                 variant={state ? 'success' : 'primary'}
                 onClick={handleClick}
             >
-                {state ? enabledText : disabledText}
+                {state ? enabled_text : disabled_text}
             </Button>
         </div>
+    )
+}
+
+function Button({
+    children,
+    onClick,
+    style,
+    variant
+}: PropsWithChildren<{
+    onClick: () => void
+    style: React.CSSProperties
+    variant: 'primary' | 'success'
+}>) {
+    return (
+        <button
+            style={style}
+            className={`btn btn-${variant}`}
+            onClick={onClick}
+        >
+            {children}
+        </button>
     )
 }
