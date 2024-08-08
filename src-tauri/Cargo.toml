@@ -19,6 +19,7 @@ xcap = "0.0.10"
 image-compare = "0.4.1"
 tauri-plugin-dialog = "2.0.0-rc.0"
 tauri-plugin-shell = "2.0.0-rc.0"
+enigo = "0.2.1"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

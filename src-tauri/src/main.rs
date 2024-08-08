@@ -1,14 +1,14 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod utils;
+
 use serde::Serialize;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
 };
 use tauri::Manager;
-use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
-use xcap::Monitor;
 
 const SUPPORTED_WIDTH: [u32; 2] = [1920, 2560];
 
@@ -150,28 +150,19 @@ fn main() {
         .build(tauri::generate_context!())
         .expect("error while running tauri application");
 
-    let monitors = Monitor::all().expect("feur");
-    // get main monitor
-    let main_monitor = monitors.iter().find(|monitor| monitor.is_primary());
+    let main_monitor = utils::get_main_monitor();
     let main_monitor = match main_monitor {
-        Some(monitor) => monitor,
-        None => {
-            err_dialog(app.app_handle(), "No primary monitor found");
+        Ok(main_monitor) => main_monitor,
+        Err(err) => {
+            utils::err_dialog(app.app_handle(), &err);
             return;
         }
     };
     let width = main_monitor.width();
     if !SUPPORTED_WIDTH.contains(&width) {
-        err_dialog(app.app_handle(), "Unsupported resolution");
+        utils::err_dialog(app.app_handle(), "Unsupported resolution");
         return;
     }
 
     app.run(|_, _| {});
-}
-
-fn err_dialog(app: &tauri::AppHandle, message: &str) {
-    app.dialog()
-        .message(message)
-        .kind(MessageDialogKind::Error)
-        .blocking_show();
 }
