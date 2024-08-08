@@ -1,53 +1,39 @@
-import { PropsWithChildren, useEffect, useState } from 'react'
-import Button from './components/ToggleButton'
+import { useEffect, useState } from 'react'
 import ToggleButton from './components/ToggleButton'
+import TimerButton from './components/TimerButton'
 import { invoke } from '@tauri-apps/api/core'
-
-interface ToggleButton {
-    id: string
-    type: 'toggleButton'
-    defaultState?: boolean
-    enabled_text: string
-    disabled_text: string
-}
-
-interface DelayButton {
-    id: string
-    type: 'delayButton'
-    default_text: string
-    running_text: string
-    delay: number
-}
-type Button = ToggleButton | DelayButton
+import type {
+    Button as TButton,
+    TimerButton as TTimerButton,
+    ToggleButton as TToggleButton
+} from './type'
 
 export default function App() {
-    const [buttons, setButtons] = useState<Button[][]>([])
+    const [buttons, setButtons] = useState<TButton[][]>([])
 
     useEffect(() => {
         invoke('get_buttons')
             .then(
                 buttons =>
                     buttons as (
-                        | { Toggle: Omit<ToggleButton, 'type'> }
-                        | { Delay: Omit<DelayButton, 'type'> }
+                        | { Toggle: Omit<TToggleButton, 'type'> }
+                        | { Timer: Omit<TTimerButton, 'type'> }
                     )[][]
             )
             .then(buttons => {
-                const newButtons: Button[][] = []
+                const newButtons: TButton[][] = []
                 for (const row of buttons) {
-                    console.log('row', row)
-                    const newRow: Button[] = []
+                    const newRow: TButton[] = []
                     for (const button of row) {
-                        console.log('button', button)
                         if ('Toggle' in button) {
                             newRow.push({
                                 type: 'toggleButton',
                                 ...button.Toggle
                             })
-                        } else if ('Delay' in button) {
+                        } else if ('Timer' in button) {
                             newRow.push({
-                                type: 'delayButton',
-                                ...button.Delay
+                                type: 'timerButton',
+                                ...button.Timer
                             })
                         }
                     }
@@ -59,32 +45,22 @@ export default function App() {
             })
     }, [])
 
-    // console.log(buttons)
-    // console.log(JSON.stringify(buttons))
     return (
-        <div className='w-100 h-100 d-flex flex-column align-items-center p-2'>
-            {buttons.map(row => (
-                <ButtonRow>
-                    {row.map(btn => {
+        <div id='app'>
+            {buttons.map((row, i) => (
+                <div key={i} className='btn-row'>
+                    {row.map((btn, j) => {
                         switch (btn.type) {
                             case 'toggleButton':
-                                return <ToggleButton {...btn} />
-                            case 'delayButton':
-                                return
+                                return <ToggleButton key={j} {...btn} />
+                            case 'timerButton':
+                                return <TimerButton key={j} {...btn} />
                             default:
                                 throw 'unknown button type'
                         }
                     })}
-                </ButtonRow>
+                </div>
             ))}
-        </div>
-    )
-}
-
-function ButtonRow({ children }: PropsWithChildren) {
-    return (
-        <div className='w-100 d-flex flex-row align-item-center justify-content-center'>
-            {children}
         </div>
     )
 }

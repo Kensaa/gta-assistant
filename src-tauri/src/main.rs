@@ -6,17 +6,22 @@ use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
 };
+use tauri::Manager;
+use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
+use xcap::Monitor;
+
+const SUPPORTED_WIDTH: [u32; 2] = [1920, 2560];
 
 type ThreadStatus = Arc<Mutex<bool>>;
 // A task creating a long running thread that can be stopped by setting the value of the ThreadStatus to false
 type LongTask = fn(ThreadStatus);
 // A task that runs for a fixed amount of time
-type Task = fn();
+type Task = fn(u16);
 
 // A button that can be toggled on and off, starting and stopping a long running thread
 // ex : fingerprint solver
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 struct ToggleButton {
     id: String,
     #[serde(skip_serializing)]
@@ -26,51 +31,21 @@ struct ToggleButton {
 }
 
 // A button that can be clicked, starting a thread for a fixed amount of time
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 struct TimerButton {
     id: String,
     #[serde(skip_serializing)]
     task: Task,
-    delay: u64,
+    delay: u16,           // delay in seconds
     default_text: String, // text to display when the timer is not running
     running_text: String, // text to display when the timer is running
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Debug)]
 enum Button {
     Toggle(ToggleButton),
     Timer(TimerButton),
 }
-
-// impl Serialize for ToggleButton {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: serde::Serializer,
-//     {
-//         let mut state = serializer.serialize_struct("toggleButton", 4)?;
-//         state.serialize_entry("type", "toggleButton")?;
-//         state.serialize_entry("id", &self.id)?;
-//         state.serialize_entry("enabled_text", &self.enabled_text)?;
-//         state.serialize_entry("disabled_text", &self.disabled_text)?;
-
-//         state.end()
-//     }
-// }
-
-// impl Serialize for TimerButton {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: serde::Serializer,
-//     {
-//         let mut state = serializer.serialize_newtype_struct(Some(5))?;
-//         state.serialize_entry("type", "delayButton")?;
-//         state.serialize_entry("id", &self.id)?;
-//         state.serialize_entry("default_text", &self.default_text)?;
-//         state.serialize_entry("running_text", &self.running_text)?;
-//         state.serialize_entry("delay", &self.delay)?;
-//         state.end()
-//     }
-// }
 
 struct AppState {
     running_threads: Mutex<HashMap<String, ThreadStatus>>,
@@ -80,6 +55,57 @@ struct AppState {
 #[tauri::command]
 fn get_buttons(state: tauri::State<AppState>) -> Vec<Vec<Button>> {
     state.buttons.clone()
+}
+
+#[tauri::command]
+fn handle_button(state: tauri::State<AppState>, id: String, action: bool) {
+    // If action is true then start the task, else stop it
+    let buttons: Vec<&Button> = state.buttons.iter().flatten().collect();
+    let button = buttons.iter().find(|button| match button {
+        Button::Toggle(toggle) => toggle.id == id,
+        Button::Timer(timer) => timer.id == id,
+    });
+    let button = match button {
+        Some(button) => button,
+        None => return,
+    };
+
+    let mut running_threads = state.running_threads.lock().unwrap();
+    let is_running = match running_threads.get(&id) {
+        Some(signal) => *signal.lock().unwrap(),
+        None => false,
+    };
+
+    match button {
+        Button::Toggle(toggle) => {
+            if action {
+                if is_running {
+                    println!("Task \"{}\" already running", id);
+                    return;
+                }
+                let thread_status = Arc::new(Mutex::new(true));
+
+                (toggle.task)(thread_status.clone());
+
+                running_threads.insert(id, thread_status);
+            } else {
+                if let Some(signal) = running_threads.get(&id) {
+                    let mut signal = signal.lock().unwrap();
+                    *signal = false;
+                }
+            }
+        }
+        Button::Timer(timer) => {
+            if action {
+                if is_running {
+                    println!("Task \"{}\" already running", id);
+                    return;
+                }
+
+                (timer.task)(timer.delay);
+            }
+        }
+    }
 }
 
 fn main() {
@@ -101,6 +127,13 @@ fn main() {
             enabled_text: "Disable Fingerprints (Cayo)".to_string(),
             disabled_text: "Enable Fingerprints (Cayo)".to_string(),
         }),
+        Button::Timer(TimerButton {
+            id: "cayo-solver".to_string(),
+            task: |_delay| {},
+            delay: 5,
+            default_text: "Timer".to_string(),
+            running_text: "Timer".to_string(),
+        }),
     ];
 
     buttons.push(row1);
@@ -109,11 +142,36 @@ fn main() {
         running_threads: Mutex::new(HashMap::new()),
         buttons,
     };
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(state)
-        .invoke_handler(tauri::generate_handler![get_buttons])
-        .run(tauri::generate_context!())
+        .invoke_handler(tauri::generate_handler![get_buttons, handle_button])
+        .build(tauri::generate_context!())
         .expect("error while running tauri application");
+
+    let monitors = Monitor::all().expect("feur");
+    // get main monitor
+    let main_monitor = monitors.iter().find(|monitor| monitor.is_primary());
+    let main_monitor = match main_monitor {
+        Some(monitor) => monitor,
+        None => {
+            err_dialog(app.app_handle(), "No primary monitor found");
+            return;
+        }
+    };
+    let width = main_monitor.width();
+    if !SUPPORTED_WIDTH.contains(&width) {
+        err_dialog(app.app_handle(), "Unsupported resolution");
+        return;
+    }
+
+    app.run(|_, _| {});
+}
+
+fn err_dialog(app: &tauri::AppHandle, message: &str) {
+    app.dialog()
+        .message(message)
+        .kind(MessageDialogKind::Error)
+        .blocking_show();
 }
