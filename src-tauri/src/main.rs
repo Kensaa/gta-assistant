@@ -1,6 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod casino;
+mod constants;
 mod utils;
 
 use serde::Serialize;
@@ -10,13 +12,13 @@ use std::{
 };
 use tauri::Manager;
 
-const SUPPORTED_WIDTH: [u32; 2] = [1920, 2560];
+const SUPPORTED_HEIGHTS: [u32; 2] = [1080, 1440];
 
-type ThreadStatus = Arc<Mutex<bool>>;
+pub type ThreadStatus = Arc<Mutex<bool>>;
 // A task creating a long running thread that can be stopped by setting the value of the ThreadStatus to false
-type LongTask = fn(ThreadStatus);
+pub type LongTask = fn(ThreadStatus);
 // A task that runs for a fixed amount of time
-type Task = fn(u16);
+pub type Task = fn(u16);
 
 // A button that can be toggled on and off, starting and stopping a long running thread
 // ex : fingerprint solver
@@ -113,9 +115,7 @@ fn main() {
     let row1 = vec![
         Button::Toggle(ToggleButton {
             id: "casino-fingerprint".to_string(),
-            task: |_status| {
-                // long running task
-            },
+            task: casino::handler,
             enabled_text: "Disable Fingerprints (Casino)".to_string(),
             disabled_text: "Enable Fingerprints (Casino)".to_string(),
         }),
@@ -158,8 +158,8 @@ fn main() {
             return;
         }
     };
-    let width = main_monitor.width();
-    if !SUPPORTED_WIDTH.contains(&width) {
+    let height = main_monitor.height();
+    if !SUPPORTED_HEIGHTS.contains(&height) {
         utils::err_dialog(app.app_handle(), "Unsupported resolution");
         return;
     }
