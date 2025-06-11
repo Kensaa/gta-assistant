@@ -70,9 +70,6 @@ jobs:
             - name: checkout
               uses: actions/checkout@v4
 
-            - name: enable corepack
-              run: corepack enable
-
             - name: install dependencies
               run: yarn
 

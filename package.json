@@ -76,6 +76,5 @@
             "provider": "github",
             "releaseType": "draft"
         }
-    },
-    "packageManager": "yarn@4.9.2"
+    }
 }
