@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-import type { TimerButton } from '../type'
+import { Button } from '../type'
 
-export default function TimerButton({
-    id,
-    delay,
-    default_text,
-    running_text
-}: TimerButton) {
+type Props = { type: 'timer' } & Button
+export default function TimerButton({ id, delay, off_text, on_text }: Props) {
     const [running, setRunning] = useState(false)
     const [timer, setTimer] = useState(0)
 
@@ -43,7 +39,7 @@ export default function TimerButton({
                 className={`btn btn-${running ? 'on btn-running' : 'off'}`}
                 onClick={handleClick}
             >
-                {running ? `${running_text} : ${timer}s` : default_text}
+                {running ? `${on_text} : ${timer}s` : off_text}
             </button>
         </div>
     )

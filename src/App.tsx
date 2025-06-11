@@ -2,63 +2,45 @@ import { useEffect, useState } from 'react'
 import ToggleButton from './components/ToggleButton'
 import TimerButton from './components/TimerButton'
 import { invoke } from '@tauri-apps/api/core'
-import type {
-    Button as TButton,
-    TimerButton as TTimerButton,
-    ToggleButton as TToggleButton
-} from './type'
+import { Button } from './type'
 
 export default function App() {
-    const [buttons, setButtons] = useState<TButton[][]>([])
-
+    const [buttons, setButtons] = useState<JSX.Element[][]>([])
     useEffect(() => {
         invoke('get_buttons')
-            .then(
-                buttons =>
-                    buttons as (
-                        | { Toggle: Omit<TToggleButton, 'type'> }
-                        | { Timer: Omit<TTimerButton, 'type'> }
-                    )[][]
-            )
-            .then(buttons => {
-                const newButtons: TButton[][] = []
-                for (const row of buttons) {
-                    const newRow: TButton[] = []
+            .then(res => res as Button[][])
+            .then(buttonRows => {
+                const buttons = []
+                let rowIndex = 0
+                for (const row of buttonRows) {
+                    const elementRow = []
+                    let buttonIndex = 0
                     for (const button of row) {
-                        if ('Toggle' in button) {
-                            newRow.push({
-                                type: 'toggleButton',
-                                ...button.Toggle
-                            })
-                        } else if ('Timer' in button) {
-                            newRow.push({
-                                type: 'timerButton',
-                                ...button.Timer
-                            })
+                        const key = `${rowIndex}-${buttonIndex}`
+                        if (button.type === 'toggle') {
+                            elementRow.push(
+                                <ToggleButton {...button} key={key} />
+                            )
+                        } else if (button.type === 'timer') {
+                            elementRow.push(
+                                <TimerButton {...button} key={key} />
+                            )
                         }
+                        buttonIndex++
                     }
-                    newButtons.push(newRow)
+                    buttons.push(elementRow)
+                    rowIndex++
                 }
-                console.log(buttons)
-                console.log(newButtons)
-                setButtons(newButtons)
+                return buttons
             })
+            .then(buttons => setButtons(buttons))
     }, [])
 
     return (
         <div id='app'>
             {buttons.map((row, i) => (
                 <div key={i} className='btn-row'>
-                    {row.map((btn, j) => {
-                        switch (btn.type) {
-                            case 'toggleButton':
-                                return <ToggleButton key={j} {...btn} />
-                            case 'timerButton':
-                                return <TimerButton key={j} {...btn} />
-                            default:
-                                throw 'unknown button type'
-                        }
-                    })}
+                    {...row}
                 </div>
             ))}
         </div>

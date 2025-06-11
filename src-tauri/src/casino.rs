@@ -1,5 +1,5 @@
 use crate::{constants, utils, ThreadStatus};
-use image::{ImageReader, RgbImage};
+use image::RgbImage;
 use std::{path::Path, thread, time::Duration};
 use winapi::um::winuser::{VK_RETURN, VK_RIGHT, VK_TAB};
 

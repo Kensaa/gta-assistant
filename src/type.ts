@@ -1,15 +1,15 @@
-export interface ToggleButton {
+export type Button = {
     id: string
-    type: 'toggleButton'
-    enabled_text: string
-    disabled_text: string
-}
-
-export interface TimerButton {
-    id: string
-    type: 'timerButton'
-    default_text: string
-    running_text: string
-    delay: number
-}
-export type Button = ToggleButton | TimerButton
+} & (
+    | {
+          type: 'toggle'
+          enabled_text: string
+          disabled_text: string
+      }
+    | {
+          type: 'timer'
+          off_text: string
+          on_text: string
+          delay: number
+      }
+)

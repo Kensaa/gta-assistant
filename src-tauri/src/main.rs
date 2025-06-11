@@ -39,12 +39,13 @@ struct TimerButton {
     id: String,
     #[serde(skip_serializing)]
     task: Task,
-    delay: u16,           // delay in seconds
-    default_text: String, // text to display when the timer is not running
-    running_text: String, // text to display when the timer is running
+    delay: u16,       // delay in econds
+    off_text: String, // text to display when the timer is not running
+    on_text: String,  // text to display when the timer is running
 }
 
 #[derive(Clone, Serialize, Debug)]
+#[serde(tag = "type", rename_all = "snake_case")]
 enum Button {
     Toggle(ToggleButton),
     Timer(TimerButton),

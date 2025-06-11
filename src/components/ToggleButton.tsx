@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-import type { ToggleButton } from '../type'
+import { Button } from '../type'
 
+type Props = { type: 'toggle' } & Button
 export default function ToggleButton({
     id,
     enabled_text,
     disabled_text
-}: ToggleButton) {
+}: Props) {
     const [state, setState] = useState(false)
     const handleClick = () => {
         invoke('handle_button', { id, action: !state }).then(() =>
