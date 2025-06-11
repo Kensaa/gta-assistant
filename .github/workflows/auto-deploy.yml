@@ -10,111 +10,89 @@ jobs:
     version-check:
         name: Version Checking
         runs-on: [self-hosted]
+        container:
+            image: docker.kensa.fr/electron-build-image
+            credentials:
+                username: ${{ secrets.REGISTRY_USERNAME }}
+                password: ${{ secrets.REGISTRY_PASSWORD }}
         outputs:
-            status: ${{ steps.build-test.outputs.building }}
-            current-version: ${{ steps.get-pkgversion.outputs.PACKAGE_VERSION }}
-            previous-tag: ${{ steps.get-tag.outputs.TAG }}
-            changes: ${{ steps.get-tag.outputs.changes }}
+            version: ${{ steps.get-project-version.outputs.version }}
+            tag: ${{ steps.get-tag.outputs.tag }}
+            changes: ${{ steps.changes.outputs.changes }}
         steps:
             - name: checkout
               uses: actions/checkout@v4
 
+            - name: Mark repo as safe
+              run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
             - name: fetch
               run: |
-                  git fetch --tags
+                  git fetch --tags --force
                   git fetch --prune --unshallow
 
             - name: get-tag
               id: get-tag
-              uses: actions/github-script@v7
-              with:
-                  script: |
-                      let logs = '';
-                      let err = '';
-
-                      const options = {};
-                      options.listeners = {
-                          stdout: (data) => {
-                              logs += data.toString();
-                          },
-                          stderr: (data) => {
-                              err += data.toString();
-                          }
-                      };
-
-                      await exec.exec('git log --oneline --decorate=short --decorate-refs="refs/tags/" --all',"", options);
-                      let lines = logs.split('\n')
-
-                      lines = lines.map(line => line.substring(line.indexOf(' ')).trim())
-                      let tagLine = lines.find(line => line.includes("(tag: "))
-                      if (tagLine) {
-                          const tagName = tagLine.substring(tagLine.indexOf("(tag: ") + 6, tagLine.indexOf(")")).trim()
-                          const changes = lines.slice(0,lines.indexOf(tagLine)).map(line => `- ${line}`).join('\n')
-                          core.setOutput("TAG", tagName);
-                          core.setOutput("CHANGES", changes);
-                          console.log('tag:',tagName)
-                          console.log('changes:',changes)
-                      }else {
-                          const changes = lines.map(line => `- ${line}`).join('\n')
-                          core.setOutput("TAG", "v0.0.0");
-                          core.setOutput("CHANGES", changes);
-                          console.log('tag:',"v0.0.0")
-                          console.log('changes:',changes)
-                      }
+              run: |
+                  tag=$(git describe --tags --abbrev=0)
+                  echo $tag
+                  echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
             - name: get-pkgversion
-              id: get-pkgversion
-              uses: actions/github-script@v7
-              with:
-                  script: |
-                      const fs = require('fs');
-                      const path = require('path');
-                      const pkgJSON = JSON.parse(fs.readFileSync('package.json', "utf8"));
-                      core.setOutput("PACKAGE_VERSION", "v"+pkgJSON.version);
-
-            - name: build-test
-              id: build-test
+              id: get-project-version
               run: |
-                  if [[ "${{ steps.get-tag.outputs.TAG }}" == "${{steps.get-pkgversion.outputs.PACKAGE_VERSION}}" ]]; 
-                  then
-                    echo "building=false" >> "$GITHUB_OUTPUT"
-                  else
-                    echo "building=true" >> "$GITHUB_OUTPUT"
-                  fi
+                  version=v$(cat package.json | jq -r ".version")
+                  echo $version
+                  echo "version=$version" >> "$GITHUB_OUTPUT"
+
+            - name: get changes
+              id: changes
+              run: |
+                  changes=$(git log "$(git describe --tags --abbrev=0)..HEAD" --pretty=format:'- %s (%ad)' --date=short)
+                  echo "changes<<EOF" >> $GITHUB_OUTPUT
+                  echo "$changes" >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
 
     build:
         name: Build
         runs-on: [self-hosted]
         permissions: write-all
         needs: version-check
-        if: ${{ needs.version-check.outputs.status == 'true' }}
+        if: ${{ needs.version-check.outputs.tag != needs.version-check.outputs.version || github.event_name == 'workflow_dispatch' }}
+        container:
+            image: docker.kensa.fr/electron-build-image
+            credentials:
+                username: ${{ secrets.REGISTRY_USERNAME }}
+                password: ${{ secrets.REGISTRY_PASSWORD }}
+        env:
+            WINEPREFIX: /tmp/wineprefix
         steps:
             - name: checkout
               uses: actions/checkout@v4
 
-            - name: setup node 21
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 21
+            - name: enable corepack
+              run: corepack enable
 
             - name: install dependencies
               run: yarn
 
             - name: build
-              run: yarn build
+              run: yarn release
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: version
-              id: version
-              run: echo "version=$(echo ${{needs.version-check.outputs.current-version}} | cut -b 2-)" >> "$GITHUB_OUTPUT"
+            - name: Write changelog to file
+              run: |
+                  cat << EOF > changelog.txt
+                  ${{ needs.version-check.outputs.changes }}
+                  EOF
 
-            - name: release
-              uses: softprops/action-gh-release@v1
-              with:
-                  files: |
-                      release/GTA Assistant ${{steps.version.outputs.version}}.exe
-                      release/GTA Assistant ${{steps.version.outputs.version}}.msi
-                      release/gta-assistant-${{steps.version.outputs.version}}.zip
-                  draft: false
-                  prerelease: false
-                  tag_name: ${{ needs.version-check.outputs.current-version }}
-                  body: ${{ needs.version-check.outputs.changes }}
+            - name: Overwrite GitHub release body with changelog and make release visible
+              run: |
+                  cat << EOF > changelog.txt
+                  ${{ needs.version-check.outputs.changes }}
+                  EOF
+                  tag=${{ needs.version-check.outputs.version }}
+                  gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --notes-file changelog.txt --draft=false
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

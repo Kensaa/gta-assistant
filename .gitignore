@@ -27,3 +27,4 @@ dist-electron
 build
 release
 out
+.yarn
