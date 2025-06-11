@@ -9,7 +9,8 @@
     "scripts": {
         "dev": "vite",
         "build": "rm -r -f release && yarn && tsc && vite build && electron-builder --x64 -wl && rm -r dist-electron && rm -r dist",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "release": "tsc && vite build && electron-builder --x64 -wl --publish always"
     },
     "dependencies": {
         "@nut-tree-fork/nut-js": "^4.2.1",
@@ -70,6 +71,10 @@
                 }
             ],
             "publisherName": "Kensa"
+        },
+        "publish": {
+            "provider": "github",
+            "releaseType": "draft"
         }
     },
     "packageManager": "yarn@4.9.2"
