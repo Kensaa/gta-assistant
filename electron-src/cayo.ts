@@ -148,7 +148,7 @@ async function loadFingerprintParts(
             console.log(
                 '------------------------------------------------------------------------------'
             )
-            await wait(2700)
+            await wait(2900)
         }
         await wait(1000 / UPDATE_RATE)
     }
