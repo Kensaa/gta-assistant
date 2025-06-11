@@ -1,9 +1,8 @@
+use image::{imageops, DynamicImage, ImageReader, RgbImage};
+use image_hasher::HasherConfig;
+use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
-
-use image::imageops;
-use image::DynamicImage;
-use rustdct::DctPlanner;
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use winapi::ctypes::c_int;
 use winapi::um::winuser::{
@@ -88,107 +87,30 @@ pub fn capture_regions(monitor: &Monitor, regions: &[Region]) -> Vec<image::Dyna
         .collect()
 }
 
-pub fn hash_image(img: &image::GrayImage) -> Vec<u8> {
-    let size: usize = 32;
-    let small: usize = 8;
-    let resized_img = imageops::resize(
-        img,
-        size as u32,
-        size as u32,
-        imageops::FilterType::Gaussian,
-    );
-    let resized_img = resized_img.pixels().map(|p| p[0]).collect::<Vec<_>>();
-    // dct
-    let mut planner = DctPlanner::new();
-    let dct = planner.plan_dct2(size * size);
-    let mut dct_data = vec![0f64; size * size];
-    for i in 0..size {
-        for j in 0..size {
-            dct_data[i * size + j] = resized_img[(i * size + j) as usize] as f64;
-        }
-    }
-    dct.process_dct2(&mut dct_data);
+pub fn compare_image(img1: &RgbImage, img2: &RgbImage) -> f64 {
+    let hasher = HasherConfig::new().to_hasher();
+    let img1 = DynamicImage::ImageRgb8(img1.clone());
+    let img2 = DynamicImage::ImageRgb8(img2.clone());
+    let hash1 = hasher.hash_image(&img1);
+    let hash2 = hasher.hash_image(&img2);
 
-    // dct-data is a 32x32 in line matrix
-    // get only the 8x8 top-left corner
-    let mut total = 0f64;
-    // for i in 0..small {
-    //     for j in 0..small {
-    //         total += dct_data[i * size + j];
-    //     }
-    // }
-    for i in 0..small * small {
-        total += dct_data[i];
-    }
-    let avg = total / (small * small) as f64;
-    let mut hash: Vec<u8> = Vec::with_capacity(8 * 8);
-    for i in 0..small {
-        for j in 0..small {
-            hash.push(if dct_data[i * size + j] > avg { 1 } else { 0 });
-        }
-    }
-    hash
+    let distance = hash1.dist(&hash2);
+    let similarity = 1.0 - (distance as f64 / (hash1.as_bytes().len() * 8) as f64);
+    similarity
 }
 
-pub fn compare_image(img1: &image::GrayImage, img2: &image::GrayImage) -> f64 {
-    let (hash1, hash2) = thread::scope(|scope| {
-        let hash1_thread = scope.spawn(|| hash_image(img1));
-        let hash2_thread = scope.spawn(|| hash_image(img2));
-        let hash1 = hash1_thread.join().unwrap();
-        let hash2 = hash2_thread.join().unwrap();
-        (hash1, hash2)
-    });
-
-    let mut count = 0;
-    for (h1, h2) in hash1.iter().zip(hash2.iter()) {
-        if h1 == h2 {
-            count += 1;
-        }
-    }
-    count as f64 / hash1.len() as f64
-}
-
-// pub fn compare_image(img1: &image::GrayImage, img2: &image::GrayImage) -> f64 {
-//     match image_compare::gray_similarity_structure(
-//         &image_compare::Algorithm::RootMeanSquared,
-//         img1,
-//         img2,
-//     ) {
-//         Ok(similarity) => similarity.score,
-//         Err(_) => 0f64,
-//     }
-// }
-// pub fn compare_image(img1: &image::GrayImage, img2: &image::GrayImage) -> f64 {
-//     let pixel1: Vec<_> = img1.pixels().collect();
-//     let pixel2: Vec<_> = img2.pixels().collect();
-//     if pixel1.len() != pixel2.len() {
-//         return 0f64;
-//     }
-//     let mut count: u32 = 0;
-//     for (p1, p2) in pixel1.iter().zip(pixel2.iter()) {
-//         if p1[0] == p2[0] {
-//             count += 1;
-//         }
-//     }
-//     count as f64 / pixel1.len() as f64
-// }
-
-pub fn find_image_in_array(target: &image::GrayImage, images: &[image::GrayImage]) -> usize {
+pub fn find_image_in_array(target: &RgbImage, images: &[RgbImage]) -> usize {
     let mut best_index = 0;
     let mut best_score = 0f64;
     for (index, image) in images.iter().enumerate() {
         let score = compare_image(target, image);
-        println!(
-            "Index : {}, Score: {}, Best Score : {}, Best Index : {}",
-            index, score, best_score, best_index
-        );
         if score > best_score {
             best_score = score;
             best_index = index;
         }
-        // if score == 1f64 {
-        //     break;
-        // }
+        if score == 1f64 {
+            break;
+        }
     }
     println!();
     best_index
@@ -251,4 +173,12 @@ pub fn relative_array(arr: &[usize]) -> Vec<usize> {
         last = *i;
     }
     result
+}
+
+pub fn open_image(path: PathBuf) -> RgbImage {
+    return ImageReader::open(path)
+        .expect("failed to open image")
+        .decode()
+        .expect("failed to decode image")
+        .to_rgb8();
 }

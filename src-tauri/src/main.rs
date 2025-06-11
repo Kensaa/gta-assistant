@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod casino;
+mod casino_capture;
 mod constants;
 mod utils;
 
@@ -112,7 +113,7 @@ fn handle_button(state: tauri::State<AppState>, id: String, action: bool) {
 
 fn main() {
     let mut buttons = Vec::new();
-    let row1 = vec![
+    buttons.push(vec![
         Button::Toggle(ToggleButton {
             id: "casino-fingerprint".to_string(),
             task: casino::handler,
@@ -127,16 +128,14 @@ fn main() {
             enabled_text: "Disable Fingerprints (Cayo)".to_string(),
             disabled_text: "Enable Fingerprints (Cayo)".to_string(),
         }),
-        Button::Timer(TimerButton {
-            id: "cayo-solver".to_string(),
-            task: |_delay| {},
-            delay: 5,
-            default_text: "Timer".to_string(),
-            running_text: "Timer".to_string(),
-        }),
-    ];
+    ]);
 
-    buttons.push(row1);
+    buttons.push(vec![Button::Toggle(ToggleButton {
+        id: "casino-capture".to_string(),
+        task: casino_capture::handler,
+        enabled_text: "Disable Casino Capture".to_string(),
+        disabled_text: "Enable Casino Capture".to_string(),
+    })]);
 
     let state: AppState = AppState {
         running_threads: Mutex::new(HashMap::new()),
