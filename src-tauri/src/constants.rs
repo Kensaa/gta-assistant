@@ -1,6 +1,10 @@
 use crate::utils::{Region, Resolution};
 use lazy_static::lazy_static;
-use std::{collections::HashMap, time::Duration};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
 pub const R1080: Resolution = (1920, 1080);
 pub const R1440: Resolution = (2560, 1440);
@@ -12,14 +16,12 @@ lazy_static! {
         let mut m = HashMap::new();
         m.insert(R1080, [370, 90, 1550, 120]);
         add_resolution_to_map(&mut m, R1440);
-        // m.insert(1440, [495, 126, 2060, 155]);
         m
     };
     pub static ref CASINO_FINGERPRINT_POS: HashMap<Resolution, Region> = {
         let mut m = HashMap::new();
         m.insert(R1080, [974, 157, 1320, 685]);
         add_resolution_to_map(&mut m, R1440);
-        // m.insert(1440, [1215, 208, 1825, 910]);
         m
     };
     pub static ref CASINO_PARTS_POS: HashMap<Resolution, Vec<Region>> = {
@@ -38,20 +40,6 @@ lazy_static! {
             ],
         );
         add_resolution_to_array_map(&mut m, R1440);
-        println!("{:?}",m.get(&R1440).unwrap());
-        // m.insert(
-        //     R1440,
-        //     vec![
-        //         [632, 360, 791, 519],
-        //         [825, 360, 983, 519],
-        //         [632, 550, 791, 710],
-        //         [825, 550, 983, 710],
-        //         [632, 743, 791, 900],
-        //         [825, 743, 983, 900],
-        //         [632, 937, 791, 1095],
-        //         [825, 937, 983, 1095],
-        //     ],
-        // );
         m
     };
     pub static ref CASINO_WAIT_DELAY:Duration = Duration::from_millis(4350);
@@ -97,6 +85,14 @@ lazy_static! {
     pub static ref PRESS_DURATION: Duration = Duration::from_millis(30);
     pub static ref UPDATE_RATE:u16 = 10;
     pub static ref LOOP_DELAY:Duration = Duration::from_millis(1000 / *UPDATE_RATE as u64);
+
+    pub static ref OUTPUT_PATH: PathBuf = {
+        if cfg!(debug_assertions) {
+            Path::new("../output")
+        }else {
+            Path::new("output")
+        }.to_path_buf()
+    };
 }
 
 fn add_resolution_to_map(map: &mut HashMap<Resolution, Region>, resolution: Resolution) {

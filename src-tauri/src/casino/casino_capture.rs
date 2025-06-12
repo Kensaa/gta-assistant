@@ -1,7 +1,6 @@
 use gta_assistant::{constants, utils, ThreadStatus};
 use std::{
     fs::{self},
-    path::Path,
     thread,
     time::Duration,
 };
@@ -21,7 +20,7 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
         let header_pos = constants::CASINO_HEADER_POS.get(&resolution).unwrap();
         let fingerprint_pos = constants::CASINO_FINGERPRINT_POS.get(&resolution).unwrap();
         let parts_pos = constants::CASINO_PARTS_POS.get(&resolution).unwrap();
-        let output_folder = Path::new("../output")
+        let output_folder = constants::OUTPUT_PATH
             .join(resolution.1.to_string())
             .join("casino");
 
@@ -30,6 +29,8 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
         }
         let monitor = utils::get_main_monitor().unwrap();
         let mut curr_index = 0;
+        thread::sleep(Duration::from_millis(5000));
+
         loop {
             if !utils::check_thread_status(&thread_status) {
                 break;
@@ -44,11 +45,12 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
                     let fingerprint_path = file.path().join("full.png");
                     if fingerprint_path.exists() {
                         let prev_fingerprint_screenshot = utils::load_image(fingerprint_path);
-                        if utils::compare_image(
+                        let score = utils::compare_image(
                             &fingerprint_screenshot,
                             &prev_fingerprint_screenshot,
-                        ) > 0.99
-                        {
+                        );
+                        println!("n°{}, score: {}", file.file_name().to_str().unwrap(), score);
+                        if score == 1f64 {
                             // already captured this one
                             found = true;
                             break;
@@ -56,34 +58,32 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
                     }
                 }
             }
-            if found {
-                continue;
+            if !found {
+                let curr_path = output_folder.join(curr_index.to_string());
+                if !curr_path.exists() {
+                    fs::create_dir(&curr_path).expect("failed to create folder");
+                }
+                let header_screenshot = utils::capture_region(&monitor, header_pos).into_rgb8();
+                header_screenshot
+                    .save(curr_path.join("header.png"))
+                    .expect("failed to screenshot header");
+
+                fingerprint_screenshot
+                    .save(curr_path.join("full.png"))
+                    .expect("failed to screenshot fingerprint");
+
+                utils::capture_regions(&monitor, &parts_pos)
+                    .into_iter()
+                    .map(|img| img.into_rgb8())
+                    .enumerate()
+                    .for_each(|(i, img)| {
+                        img.save(curr_path.join(i.to_string() + ".png"))
+                            .expect("failed to write part screenshot");
+                    });
+
+                curr_index += 1;
             }
-
-            let curr_path = output_folder.join(curr_index.to_string());
-            if !curr_path.exists() {
-                fs::create_dir(&curr_path).expect("failed to create folder");
-            }
-            let header_screenshot = utils::capture_region(&monitor, header_pos).into_rgb8();
-            header_screenshot
-                .save(curr_path.join("header.png"))
-                .expect("failed to screenshot header");
-
-            fingerprint_screenshot
-                .save(curr_path.join("full.png"))
-                .expect("failed to screenshot fingerprint");
-
-            utils::capture_regions(&monitor, &parts_pos)
-                .into_iter()
-                .map(|img| img.into_rgb8())
-                .enumerate()
-                .for_each(|(i, img)| {
-                    img.save(curr_path.join(i.to_string() + ".png"))
-                        .expect("failed to write part screenshot");
-                });
-
-            curr_index += 1;
-            thread::sleep(Duration::from_millis(10000));
+            thread::sleep(Duration::from_millis(5000));
         }
     });
 }
