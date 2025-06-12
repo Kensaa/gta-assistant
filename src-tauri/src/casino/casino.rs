@@ -1,6 +1,6 @@
-use crate::{constants, utils, ThreadStatus};
+use gta_assistant::{constants, utils, ThreadStatus};
 use image::RgbImage;
-use std::{path::Path, thread, time::Duration};
+use std::{path::Path, thread};
 use winapi::um::winuser::{VK_RETURN, VK_RIGHT, VK_TAB};
 
 pub fn handler(thread_status: ThreadStatus) {
@@ -81,12 +81,10 @@ pub fn handler(thread_status: ThreadStatus) {
                 }
                 utils::press(VK_TAB);
                 println!("Validating fingerprint...");
-                thread::sleep(Duration::from_millis(
-                    4350 - 1000 / *constants::UPDATE_RATE as u64,
-                ));
+                thread::sleep(*constants::CASINO_WAIT_DELAY - *constants::LOOP_DELAY);
             }
 
-            thread::sleep(Duration::from_millis(1000 / *constants::UPDATE_RATE as u64));
+            thread::sleep(*constants::LOOP_DELAY);
         }
     });
 }

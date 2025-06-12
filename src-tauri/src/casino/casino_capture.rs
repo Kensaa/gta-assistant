@@ -1,4 +1,4 @@
-use crate::{constants, utils, ThreadStatus};
+use gta_assistant::{constants, utils, ThreadStatus};
 use std::{
     fs::{self},
     path::Path,

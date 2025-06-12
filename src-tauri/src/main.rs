@@ -2,20 +2,17 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod casino;
-mod casino_capture;
-mod constants;
-mod utils;
+mod cayo;
 
+use gta_assistant::{utils, ThreadStatus};
 use serde::Serialize;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
 };
 use tauri::Manager;
-
 const SUPPORTED_HEIGHTS: [u32; 2] = [1080, 1440];
 
-pub type ThreadStatus = Arc<Mutex<bool>>;
 // A task creating a long running thread that can be stopped by setting the value of the ThreadStatus to false
 pub type LongTask = fn(ThreadStatus);
 // A task that runs for a fixed amount of time
@@ -117,15 +114,13 @@ fn main() {
     buttons.push(vec![
         Button::Toggle(ToggleButton {
             id: "casino-fingerprint".to_string(),
-            task: casino::handler,
+            task: casino::casino::handler,
             enabled_text: "Disable Fingerprints (Casino)".to_string(),
             disabled_text: "Enable Fingerprints (Casino)".to_string(),
         }),
         Button::Toggle(ToggleButton {
             id: "cayo-fingerprint".to_string(),
-            task: |_status| {
-                // long running task
-            },
+            task: cayo::cayo::handler,
             enabled_text: "Disable Fingerprints (Cayo)".to_string(),
             disabled_text: "Enable Fingerprints (Cayo)".to_string(),
         }),
@@ -133,7 +128,7 @@ fn main() {
 
     buttons.push(vec![Button::Toggle(ToggleButton {
         id: "casino-capture".to_string(),
-        task: casino_capture::handler,
+        task: casino::casino_capture::handler,
         enabled_text: "Disable Casino Capture".to_string(),
         disabled_text: "Enable Casino Capture".to_string(),
     })]);

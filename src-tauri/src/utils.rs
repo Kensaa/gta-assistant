@@ -1,6 +1,7 @@
 use image::{imageops, DynamicImage, ImageReader, RgbImage};
 use image_hasher::HasherConfig;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
@@ -12,8 +13,7 @@ use winapi::um::winuser::{
 };
 use xcap::Monitor;
 
-use crate::ThreadStatus;
-
+pub type ThreadStatus = Arc<Mutex<bool>>;
 pub type Region = [u32; 4];
 
 pub fn check_thread_status(thread_status: &ThreadStatus) -> bool {

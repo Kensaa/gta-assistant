@@ -1,6 +1,6 @@
 use crate::utils::Region;
 use lazy_static::lazy_static;
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 lazy_static! {
     // CASINO
@@ -47,6 +47,7 @@ lazy_static! {
         );
         m
     };
+    pub static ref CASINO_WAIT_DELAY:Duration = Duration::from_millis(4350);
 
     // CAYO
     pub static ref CAYO_FINGERPRINT_COUNT: u16 = 7;
@@ -94,8 +95,10 @@ lazy_static! {
         );
         m
     };
+    pub static ref CAYO_WAIT_DELAY:Duration = Duration::from_millis(3000);
 
 
     // GENERAL
     pub static ref UPDATE_RATE:u16 = 10;
+    pub static ref LOOP_DELAY:Duration = Duration::from_millis(1000 / *UPDATE_RATE as u64);
 }
