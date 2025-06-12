@@ -1,7 +1,8 @@
 use crate::constants;
 use image::{imageops, DynamicImage, ImageReader, RgbImage};
 use image_hasher::{Hasher, HasherConfig, ImageHash};
-use std::path::PathBuf;
+use rust_embed::Embed;
+use std::path::{Component, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
@@ -15,6 +16,11 @@ use xcap::Monitor;
 
 pub type ThreadStatus = Arc<Mutex<bool>>;
 pub type Region = [u32; 4];
+
+#[derive(Embed)]
+#[folder = "../assets"]
+#[prefix = "assets/"]
+struct Asset;
 
 pub fn check_thread_status(thread_status: &ThreadStatus) -> bool {
     let signal = thread_status.lock().unwrap();
@@ -190,10 +196,24 @@ pub fn relative_array(arr: &[usize]) -> Vec<usize> {
     result
 }
 
-pub fn open_image(path: PathBuf) -> RgbImage {
-    return ImageReader::open(path)
-        .expect("failed to open image")
-        .decode()
-        .expect("failed to decode image")
-        .to_rgb8();
+pub fn load_image(path: PathBuf) -> RgbImage {
+    let mut components = path.components();
+    match components.next() {
+        Some(Component::Normal(s)) if s.to_str().unwrap() == "assets" => {
+            let asset_path = path
+                .components()
+                .map(|c| c.as_os_str().to_str().unwrap())
+                .collect::<Vec<&str>>()
+                .join("/");
+            let file = Asset::get(&asset_path).expect("failed to load asset");
+            image::load_from_memory(&file.data)
+                .expect("failed to decode asset")
+                .to_rgb8()
+        }
+        _ => ImageReader::open(path)
+            .expect("failed to open image")
+            .decode()
+            .expect("failed to decode image")
+            .to_rgb8(),
+    }
 }

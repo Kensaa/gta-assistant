@@ -4,13 +4,12 @@
 mod casino;
 mod cayo;
 
-use gta_assistant::{utils, ThreadStatus};
+use gta_assistant::{ThreadStatus};
 use serde::Serialize;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
 };
-use tauri::Manager;
 use tauri::AppHandle;
 
 // A task creating a long running thread that can be stopped by setting the value of the ThreadStatus to false
@@ -43,6 +42,7 @@ struct TimerButton {
     description: String,
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Serialize, Debug)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum Button {
@@ -159,15 +159,6 @@ fn main() {
         .invoke_handler(tauri::generate_handler![get_buttons, handle_button])
         .build(tauri::generate_context!())
         .expect("error while running tauri application");
-
-    let main_monitor = utils::get_main_monitor();
-    let main_monitor = match main_monitor {
-        Ok(main_monitor) => main_monitor,
-        Err(err) => {
-            utils::err_dialog(app.app_handle(), &err);
-            return;
-        }
-    };
 
     app.run(|_, _| {});
 }

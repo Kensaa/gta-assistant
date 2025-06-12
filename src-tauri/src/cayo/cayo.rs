@@ -15,23 +15,23 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
             return;
         }
 
-        let asset_folder = Path::new("../assets").join(height.to_string()).join("cayo");
+        let asset_folder = Path::new("assets").join(height.to_string()).join("cayo");
 
         let header_pos = constants::CAYO_HEADER_POS.get(&height).unwrap();
         let fingerprint_pos = constants::CAYO_FINGERPRINT_POS.get(&height).unwrap();
         let parts_pos = constants::CAYO_PARTS_POS.get(&height).unwrap();
 
-        let header_image = utils::open_image(asset_folder.join("header.png"));
+        let header_image = utils::load_image(asset_folder.join("header.png"));
 
         let fingerprints: Vec<RgbImage> = (1..=*constants::CAYO_FINGERPRINT_COUNT)
-            .map(|i| utils::open_image(asset_folder.join(i.to_string()).join("fingerprint.png")))
+            .map(|i| utils::load_image(asset_folder.join(i.to_string()).join("fingerprint.png")))
             .collect();
 
         let parts: Vec<Vec<RgbImage>> = (1..=*constants::CAYO_FINGERPRINT_COUNT)
             .map(|fingerprint| {
                 (1..=8)
                     .map(|part| {
-                        utils::open_image(
+                        utils::load_image(
                             asset_folder
                                 .join(fingerprint.to_string())
                                 .join(format!("{}.png", part)),

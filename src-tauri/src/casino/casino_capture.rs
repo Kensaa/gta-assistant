@@ -43,7 +43,7 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
                 if file.file_type().unwrap().is_dir() {
                     let fingerprint_path = file.path().join("full.png");
                     if fingerprint_path.exists() {
-                        let prev_fingerprint_screenshot = utils::open_image(fingerprint_path);
+                        let prev_fingerprint_screenshot = utils::load_image(fingerprint_path);
                         if utils::compare_image(
                             &fingerprint_screenshot,
                             &prev_fingerprint_screenshot,

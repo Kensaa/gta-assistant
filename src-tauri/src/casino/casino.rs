@@ -19,21 +19,19 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
         let header_pos = constants::CASINO_HEADER_POS.get(&height).unwrap();
         let fingerprint_pos = constants::CASINO_FINGERPRINT_POS.get(&height).unwrap();
         let parts_pos = constants::CASINO_PARTS_POS.get(&height).unwrap();
-        let asset_folder = Path::new("../assets")
-            .join(height.to_string())
-            .join("casino");
+        let asset_folder = Path::new("assets").join(height.to_string()).join("casino");
 
-        let header_image: RgbImage = utils::open_image(asset_folder.join("header.png"));
+        let header_image: RgbImage = utils::load_image(asset_folder.join("header.png"));
 
         let fingerprints: Vec<RgbImage> = (1..=*constants::CASINO_FINGERPRINT_COUNT)
-            .map(|i| utils::open_image(asset_folder.join(i.to_string()).join("full.png")))
+            .map(|i| utils::load_image(asset_folder.join(i.to_string()).join("full.png")))
             .collect();
 
         let parts: Vec<Vec<RgbImage>> = (1..=*constants::CASINO_FINGERPRINT_COUNT)
             .map(|fingerprint| {
                 (1..=4)
                     .map(|part| {
-                        utils::open_image(
+                        utils::load_image(
                             asset_folder
                                 .join(fingerprint.to_string())
                                 .join(format!("{}.png", part)),
