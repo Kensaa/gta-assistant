@@ -25,17 +25,41 @@ pub fn handler(thread_status: ThreadStatus) {
             if !utils::check_thread_status(&thread_status) {
                 break;
             };
+            let fingerprint_screenshot =
+                utils::capture_region(&monitor, fingerprint_pos).into_rgb8();
+
+            // try to find if we already saved that one
+            let mut found = false;
+            for file in fs::read_dir(&output_folder).unwrap().map(|f| f.unwrap()) {
+                if file.file_type().unwrap().is_dir() {
+                    let fingerprint_path = file.path().join("full.png");
+                    if fingerprint_path.exists() {
+                        let prev_fingerprint_screenshot = utils::open_image(fingerprint_path);
+                        if utils::compare_image(
+                            &fingerprint_screenshot,
+                            &prev_fingerprint_screenshot,
+                        ) > 0.99
+                        {
+                            // already captured this one
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if found {
+                continue;
+            }
+
             let curr_path = output_folder.join(curr_index.to_string());
             if !curr_path.exists() {
                 fs::create_dir(&curr_path).expect("failed to create folder");
             }
             let header_screenshot = utils::capture_region(&monitor, header_pos).into_rgb8();
             header_screenshot
-                .save(output_folder.join("header.png"))
+                .save(curr_path.join("header.png"))
                 .expect("failed to screenshot header");
 
-            let fingerprint_screenshot =
-                utils::capture_region(&monitor, fingerprint_pos).into_rgb8();
             fingerprint_screenshot
                 .save(curr_path.join("full.png"))
                 .expect("failed to screenshot fingerprint");
