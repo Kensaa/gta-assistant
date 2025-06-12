@@ -1,11 +1,20 @@
 use gta_assistant::{constants, utils, ThreadStatus};
 use image::RgbImage;
 use std::{path::Path, thread};
+use tauri::AppHandle;
 use winapi::um::winuser::{VK_DOWN, VK_LEFT, VK_RIGHT};
 
-pub fn handler(thread_status: ThreadStatus) {
+pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
     thread::spawn(move || {
         let height = utils::get_main_monitor().unwrap().height();
+        if !crate::cayo::SUPPORTED_HEIGHTS.contains(&height) {
+            utils::err_dialog(
+                &app_handle,
+                "Cayo Fingerprints does not support your resolution",
+            );
+            return;
+        }
+
         let asset_folder = Path::new("../assets").join(height.to_string()).join("cayo");
 
         let header_pos = constants::CAYO_HEADER_POS.get(&height).unwrap();

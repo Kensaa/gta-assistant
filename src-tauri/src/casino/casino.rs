@@ -1,12 +1,20 @@
 use gta_assistant::{constants, utils, ThreadStatus};
 use image::RgbImage;
 use std::{path::Path, thread};
+use tauri::AppHandle;
 use winapi::um::winuser::{VK_RETURN, VK_RIGHT, VK_TAB};
 
-pub fn handler(thread_status: ThreadStatus) {
+pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
     thread::spawn(move || {
         // INITIALIZATION
         let height = utils::get_main_monitor().unwrap().height();
+        if !crate::casino::SUPPORTED_HEIGHTS.contains(&height) {
+            utils::err_dialog(
+                &app_handle,
+                "Casino Fingerprints does not support your resolution",
+            );
+            return;
+        }
 
         let header_pos = constants::CASINO_HEADER_POS.get(&height).unwrap();
         let fingerprint_pos = constants::CASINO_FINGERPRINT_POS.get(&height).unwrap();

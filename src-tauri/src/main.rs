@@ -11,12 +11,12 @@ use std::{
     sync::{Arc, Mutex},
 };
 use tauri::Manager;
-const SUPPORTED_HEIGHTS: [u32; 2] = [1080, 1440];
+use tauri::AppHandle;
 
 // A task creating a long running thread that can be stopped by setting the value of the ThreadStatus to false
-pub type LongTask = fn(ThreadStatus);
+pub type LongTask = fn(ThreadStatus, AppHandle);
 // A task that runs for a fixed amount of time
-pub type Task = fn(u16);
+pub type Task = fn(u16, AppHandle);
 
 // A button that can be toggled on and off, starting and stopping a long running thread
 // ex : fingerprint solver
@@ -61,7 +61,7 @@ fn get_buttons(state: tauri::State<AppState>) -> Vec<Vec<Button>> {
 }
 
 #[tauri::command]
-fn handle_button(state: tauri::State<AppState>, id: String, action: bool) {
+fn handle_button(app_handle:AppHandle, state: tauri::State<AppState>, id: String, action: bool) {
     // If action is true then start the task, else stop it
     let buttons: Vec<&Button> = state.buttons.iter().flatten().collect();
     let button = buttons.iter().find(|button| match button {
@@ -88,7 +88,7 @@ fn handle_button(state: tauri::State<AppState>, id: String, action: bool) {
                 }
                 let thread_status = Arc::new(Mutex::new(true));
 
-                (toggle.task)(thread_status.clone());
+                (toggle.task)(thread_status.clone(),app_handle);
 
                 running_threads.insert(id, thread_status);
             } else {
@@ -105,7 +105,7 @@ fn handle_button(state: tauri::State<AppState>, id: String, action: bool) {
                     return;
                 }
 
-                (timer.task)(timer.delay);
+                (timer.task)(timer.delay,app_handle);
             }
         }
     }
@@ -168,11 +168,6 @@ fn main() {
             return;
         }
     };
-    let height = main_monitor.height();
-    if !SUPPORTED_HEIGHTS.contains(&height) {
-        utils::err_dialog(app.app_handle(), "Unsupported resolution");
-        return;
-    }
 
     app.run(|_, _| {});
 }
