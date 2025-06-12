@@ -11,17 +11,19 @@ use winapi::um::winuser::{VK_DOWN, VK_RIGHT, VK_UP};
 
 pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
     thread::spawn(move || {
-        let height = utils::get_main_monitor().unwrap().height();
-        if !crate::cayo::SUPPORTED_HEIGHTS.contains(&height) {
+        let resolution = utils::get_resolution();
+        if !crate::cayo::SUPPORTED_RESOLUTIONS.contains(&resolution) {
             utils::err_dialog(&app_handle, "Cayo Capture does not support your resolution");
 
             return;
         }
 
-        let header_pos = constants::CAYO_HEADER_POS.get(&height).unwrap();
-        let fingerprint_pos = constants::CAYO_FINGERPRINT_POS.get(&height).unwrap();
-        let parts_pos = constants::CAYO_PARTS_POS.get(&height).unwrap();
-        let output_folder = Path::new("../output").join(height.to_string()).join("cayo");
+        let header_pos = constants::CAYO_HEADER_POS.get(&resolution).unwrap();
+        let fingerprint_pos = constants::CAYO_FINGERPRINT_POS.get(&resolution).unwrap();
+        let parts_pos = constants::CAYO_PARTS_POS.get(&resolution).unwrap();
+        let output_folder = Path::new("../output")
+            .join(resolution.1.to_string())
+            .join("cayo");
 
         if !output_folder.exists() {
             fs::create_dir_all(&output_folder).expect("failed to create output folder");

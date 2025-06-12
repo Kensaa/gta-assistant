@@ -9,8 +9,8 @@ use tauri::AppHandle;
 
 pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
     thread::spawn(move || {
-        let height = utils::get_main_monitor().unwrap().height();
-        if !crate::casino::SUPPORTED_HEIGHTS.contains(&height) {
+        let resolution = utils::get_resolution();
+        if !crate::casino::SUPPORTED_RESOLUTIONS.contains(&resolution) {
             utils::err_dialog(
                 &app_handle,
                 "Casino Capture does not support your resolution",
@@ -18,11 +18,11 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
             return;
         }
 
-        let header_pos = constants::CASINO_HEADER_POS.get(&height).unwrap();
-        let fingerprint_pos = constants::CASINO_FINGERPRINT_POS.get(&height).unwrap();
-        let parts_pos = constants::CASINO_PARTS_POS.get(&height).unwrap();
+        let header_pos = constants::CASINO_HEADER_POS.get(&resolution).unwrap();
+        let fingerprint_pos = constants::CASINO_FINGERPRINT_POS.get(&resolution).unwrap();
+        let parts_pos = constants::CASINO_PARTS_POS.get(&resolution).unwrap();
         let output_folder = Path::new("../output")
-            .join(height.to_string())
+            .join(resolution.1.to_string())
             .join("casino");
 
         if !output_folder.exists() {

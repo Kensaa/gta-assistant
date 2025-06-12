@@ -16,6 +16,7 @@ use xcap::Monitor;
 
 pub type ThreadStatus = Arc<Mutex<bool>>;
 pub type Region = [u32; 4];
+pub type Resolution = (u32, u32);
 
 #[derive(Embed)]
 #[folder = "../assets"]
@@ -43,6 +44,11 @@ pub fn get_main_monitor() -> Result<Monitor, String> {
         }
     };
     main_monitor
+}
+
+pub fn get_resolution() -> Resolution {
+    let monitor = get_main_monitor().unwrap();
+    return (monitor.width(), monitor.height());
 }
 
 pub fn err_dialog(app: &tauri::AppHandle, message: &str) {

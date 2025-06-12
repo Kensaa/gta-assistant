@@ -6,8 +6,8 @@ use winapi::um::winuser::{VK_DOWN, VK_LEFT, VK_RIGHT};
 
 pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
     thread::spawn(move || {
-        let height = utils::get_main_monitor().unwrap().height();
-        if !crate::cayo::SUPPORTED_HEIGHTS.contains(&height) {
+        let resolution = utils::get_resolution();
+        if !crate::cayo::SUPPORTED_RESOLUTIONS.contains(&resolution) {
             utils::err_dialog(
                 &app_handle,
                 "Cayo Fingerprints does not support your resolution",
@@ -15,11 +15,13 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
             return;
         }
 
-        let asset_folder = Path::new("assets").join(height.to_string()).join("cayo");
+        let asset_folder = Path::new("assets")
+            .join(resolution.1.to_string())
+            .join("cayo");
 
-        let header_pos = constants::CAYO_HEADER_POS.get(&height).unwrap();
-        let fingerprint_pos = constants::CAYO_FINGERPRINT_POS.get(&height).unwrap();
-        let parts_pos = constants::CAYO_PARTS_POS.get(&height).unwrap();
+        let header_pos = constants::CAYO_HEADER_POS.get(&resolution).unwrap();
+        let fingerprint_pos = constants::CAYO_FINGERPRINT_POS.get(&resolution).unwrap();
+        let parts_pos = constants::CAYO_PARTS_POS.get(&resolution).unwrap();
 
         let header_image = utils::load_image(asset_folder.join("header.png"));
 

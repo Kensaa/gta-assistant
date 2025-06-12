@@ -7,8 +7,8 @@ use winapi::um::winuser::{VK_RETURN, VK_RIGHT, VK_TAB};
 pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
     thread::spawn(move || {
         // INITIALIZATION
-        let height = utils::get_main_monitor().unwrap().height();
-        if !crate::casino::SUPPORTED_HEIGHTS.contains(&height) {
+        let resolution = utils::get_resolution();
+        if !crate::casino::SUPPORTED_RESOLUTIONS.contains(&resolution) {
             utils::err_dialog(
                 &app_handle,
                 "Casino Fingerprints does not support your resolution",
@@ -16,10 +16,12 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
             return;
         }
 
-        let header_pos = constants::CASINO_HEADER_POS.get(&height).unwrap();
-        let fingerprint_pos = constants::CASINO_FINGERPRINT_POS.get(&height).unwrap();
-        let parts_pos = constants::CASINO_PARTS_POS.get(&height).unwrap();
-        let asset_folder = Path::new("assets").join(height.to_string()).join("casino");
+        let header_pos = constants::CASINO_HEADER_POS.get(&resolution).unwrap();
+        let fingerprint_pos = constants::CASINO_FINGERPRINT_POS.get(&resolution).unwrap();
+        let parts_pos = constants::CASINO_PARTS_POS.get(&resolution).unwrap();
+        let asset_folder = Path::new("assets")
+            .join(resolution.1.to_string())
+            .join("casino");
 
         let header_image: RgbImage = utils::load_image(asset_folder.join("header.png"));
 
