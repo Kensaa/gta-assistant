@@ -4,13 +4,14 @@
 mod casino;
 mod cayo;
 
-use gta_assistant::{ThreadStatus};
+use gta_assistant::ThreadStatus;
 use serde::Serialize;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
 };
 use tauri::AppHandle;
+use tauri_plugin_log::{Target, TargetKind};
 
 // A task creating a long running thread that can be stopped by setting the value of the ThreadStatus to false
 pub type LongTask = fn(ThreadStatus, AppHandle);
@@ -61,7 +62,7 @@ fn get_buttons(state: tauri::State<AppState>) -> Vec<Vec<Button>> {
 }
 
 #[tauri::command]
-fn handle_button(app_handle:AppHandle, state: tauri::State<AppState>, id: String, action: bool) {
+fn handle_button(app_handle: AppHandle, state: tauri::State<AppState>, id: String, action: bool) {
     // If action is true then start the task, else stop it
     let buttons: Vec<&Button> = state.buttons.iter().flatten().collect();
     let button = buttons.iter().find(|button| match button {
@@ -88,7 +89,7 @@ fn handle_button(app_handle:AppHandle, state: tauri::State<AppState>, id: String
                 }
                 let thread_status = Arc::new(Mutex::new(true));
 
-                (toggle.task)(thread_status.clone(),app_handle);
+                (toggle.task)(thread_status.clone(), app_handle);
 
                 running_threads.insert(id, thread_status);
             } else {
@@ -105,7 +106,7 @@ fn handle_button(app_handle:AppHandle, state: tauri::State<AppState>, id: String
                     return;
                 }
 
-                (timer.task)(timer.delay,app_handle);
+                (timer.task)(timer.delay, app_handle);
             }
         }
     }
@@ -137,8 +138,7 @@ fn main() {
             enabled_text: "Disable Casino Capture".to_string(),
             disabled_text: "Enable Casino Capture".to_string(),
             description: "Takes screenshots of the fingerprints in the Casino Heist (you shouldn't enable this unless you were told to do so)".to_string()
-        
-                }),
+        }),
         Button::Toggle(ToggleButton {
             id: "cayo-capture".to_string(),
             task: cayo::cayo_capture::handler,
@@ -153,6 +153,12 @@ fn main() {
         buttons,
     };
     let app = tauri::Builder::default()
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .max_file_size(1_000_000)
+                .target(Target::new(TargetKind::Stdout))
+                .build(),
+        )
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(state)

@@ -1,11 +1,13 @@
 use gta_assistant::{constants, utils, ThreadStatus};
 use image::RgbImage;
+use log::info;
 use std::{path::Path, thread};
 use tauri::AppHandle;
 use winapi::um::winuser::{VK_DOWN, VK_LEFT, VK_RIGHT};
 
 pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
     thread::spawn(move || {
+        info!("thread started");
         let resolution = utils::get_resolution();
         if !crate::cayo::SUPPORTED_RESOLUTIONS.contains(&resolution) {
             utils::err_dialog(
@@ -24,10 +26,12 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
         let parts_pos = constants::CAYO_PARTS_POS.get(&resolution).unwrap();
 
         let header_image = utils::load_image(asset_folder.join("header.png"));
+        info!("header image loaded");
 
         let fingerprints: Vec<RgbImage> = (1..=*constants::CAYO_FINGERPRINT_COUNT)
             .map(|i| utils::load_image(asset_folder.join(i.to_string()).join("fingerprint.png")))
             .collect();
+        info!("fingerprints image loaded");
 
         let parts: Vec<Vec<RgbImage>> = (1..=*constants::CAYO_FINGERPRINT_COUNT)
             .map(|fingerprint| {
@@ -42,6 +46,7 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
                     .collect()
             })
             .collect();
+        info!("fingerprints parts images loaded");
 
         let monitor = utils::get_main_monitor().unwrap();
         loop {
@@ -52,13 +57,13 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
             let header_screenshot = utils::capture_region(&monitor, header_pos).into_rgb8();
             let similarity = utils::compare_image(&header_image, &header_screenshot);
             if similarity > 0.99 {
-                println!("Fingerprint detected ({} header similarity)", similarity);
+                info!("Fingerprint detected ({} header similarity)", similarity);
                 let fingerprint_screenshot =
                     utils::capture_region(&monitor, fingerprint_pos).into_rgb8();
 
                 let fingerprint_index =
                     utils::find_image_in_array(&fingerprint_screenshot, &fingerprints);
-
+                info!("Fingerprint index: {}", fingerprint_index);
                 let curr_parts = parts.get(fingerprint_index).unwrap();
                 let parts_screenshots: Vec<RgbImage> = utils::capture_regions(&monitor, &parts_pos)
                     .into_iter()
@@ -68,7 +73,7 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
                 for i in 0..8 {
                     let part_screen = parts_screenshots.get(i).unwrap();
                     let part_index = utils::find_image_in_array(part_screen, &curr_parts);
-                    println!(
+                    info!(
                         "part n°{} : current index: {}, target index : {}",
                         i, part_index, i
                     );

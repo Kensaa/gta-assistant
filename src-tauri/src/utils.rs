@@ -1,10 +1,11 @@
 use crate::constants;
 use image::{imageops, DynamicImage, ImageReader, RgbImage};
 use image_hasher::{Hasher, HasherConfig, ImageHash};
+use log::{error, info};
 use rust_embed::Embed;
 use std::path::{Component, PathBuf};
 use std::sync::{Arc, Mutex};
-use std::thread;
+use std::{panic, thread};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use winapi::ctypes::c_int;
 use winapi::um::winuser::{
@@ -204,6 +205,7 @@ pub fn relative_array(arr: &[usize]) -> Vec<usize> {
 
 pub fn load_image(path: PathBuf) -> RgbImage {
     let mut components = path.components();
+    info!("loading image : {}", path.display());
     match components.next() {
         Some(Component::Normal(s)) if s.to_str().unwrap() == "assets" => {
             let asset_path = path
@@ -211,15 +213,37 @@ pub fn load_image(path: PathBuf) -> RgbImage {
                 .map(|c| c.as_os_str().to_str().unwrap())
                 .collect::<Vec<&str>>()
                 .join("/");
-            let file = Asset::get(&asset_path).expect("failed to load asset");
-            image::load_from_memory(&file.data)
-                .expect("failed to decode asset")
-                .to_rgb8()
+            let file = match Asset::get(&asset_path) {
+                Some(file) => file,
+                None => {
+                    error!("failed to get asset");
+                    panic!("failed to get asset");
+                }
+            };
+
+            match image::load_from_memory(&file.data) {
+                Ok(img) => img.to_rgb8(),
+                Err(err) => {
+                    error!("error while decoding image : {}", err);
+                    panic!("error while decoding image");
+                }
+            }
         }
-        _ => ImageReader::open(path)
-            .expect("failed to open image")
-            .decode()
-            .expect("failed to decode image")
-            .to_rgb8(),
+        _ => {
+            let img = match ImageReader::open(path) {
+                Ok(img) => img,
+                Err(err) => {
+                    error!("failed to open image : {}", err);
+                    panic!("");
+                }
+            };
+            match img.decode() {
+                Ok(img) => img.to_rgb8(),
+                Err(err) => {
+                    error!("failed to decode image : {}", err);
+                    panic!("");
+                }
+            }
+        }
     }
 }
