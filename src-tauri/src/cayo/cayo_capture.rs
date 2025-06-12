@@ -28,7 +28,18 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
             fs::create_dir_all(&output_folder).expect("failed to create output folder");
         }
         let monitor = utils::get_main_monitor().unwrap();
-        let mut curr_index = 0;
+        // get current index
+        let mut curr_index = fs::read_dir(&output_folder)
+            .unwrap()
+            .map(|f| f.unwrap())
+            .filter(|f| f.file_type().unwrap().is_dir())
+            .map(|f| f.file_name().to_str().unwrap().to_string().parse::<usize>())
+            .filter(|res| res.is_ok())
+            .map(|res| res.unwrap())
+            .max()
+            .unwrap_or(0)
+            + 1;
+        // let mut curr_index = 0;
         thread::sleep(Duration::from_millis(5000));
         loop {
             if !utils::check_thread_status(&thread_status) {
