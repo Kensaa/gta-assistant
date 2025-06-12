@@ -126,12 +126,20 @@ fn main() {
         }),
     ]);
 
-    buttons.push(vec![Button::Toggle(ToggleButton {
-        id: "casino-capture".to_string(),
-        task: casino::casino_capture::handler,
-        enabled_text: "Disable Casino Capture".to_string(),
-        disabled_text: "Enable Casino Capture".to_string(),
-    })]);
+    buttons.push(vec![
+        Button::Toggle(ToggleButton {
+            id: "casino-capture".to_string(),
+            task: casino::casino_capture::handler,
+            enabled_text: "Disable Casino Capture".to_string(),
+            disabled_text: "Enable Casino Capture".to_string(),
+        }),
+        Button::Toggle(ToggleButton {
+            id: "cayo-capture".to_string(),
+            task: cayo::cayo_capture::handler,
+            enabled_text: "Disable Cayo Capture".to_string(),
+            disabled_text: "Enable Cayo Capture".to_string(),
+        }),
+    ]);
 
     let state: AppState = AppState {
         running_threads: Mutex::new(HashMap::new()),

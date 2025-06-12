@@ -1,6 +1,6 @@
 use gta_assistant::{constants, utils, ThreadStatus};
 use image::RgbImage;
-use std::{path::Path, thread};
+use std::{path::Path, thread, time::Instant};
 use winapi::um::winuser::{VK_DOWN, VK_LEFT, VK_RIGHT};
 
 pub fn handler(thread_status: ThreadStatus) {
@@ -42,18 +42,26 @@ pub fn handler(thread_status: ThreadStatus) {
             let similarity = utils::compare_image(&header_image, &header_screenshot);
             if similarity > 0.99 {
                 println!("Fingerprint detected ({} header similarity)", similarity);
+                let before_screens = Instant::now();
                 let fingerprint_screenshot =
                     utils::capture_region(&monitor, fingerprint_pos).into_rgb8();
 
+                let time1 = Instant::now();
                 let fingerprint_index =
                     utils::find_image_in_array(&fingerprint_screenshot, &fingerprints);
-
+                println!(
+                    "fingerprint detect time : {}ms",
+                    time1.elapsed().as_millis()
+                );
                 let curr_parts = parts.get(fingerprint_index).unwrap();
-
+                let time2 = Instant::now();
                 let parts_screenshots: Vec<RgbImage> = utils::capture_regions(&monitor, &parts_pos)
                     .into_iter()
                     .map(|img| img.into_rgb8())
                     .collect();
+
+                println!("screen time : {}ms", before_screens.elapsed().as_millis());
+                println!("only parts screen time : {}ms", time2.elapsed().as_millis());
                 for i in 0..8 {
                     let part_screen = parts_screenshots.get(i).unwrap();
                     let part_index = utils::find_image_in_array(part_screen, &curr_parts);
@@ -86,7 +94,7 @@ fn move_to(current: usize, target: usize) {
             multiple_press(VK_RIGHT, move_count);
         }
     } else {
-        if current - target < 4 {
+        if current - target > 4 {
             let move_count = 8 - current + target;
             multiple_press(VK_RIGHT, move_count);
         } else {

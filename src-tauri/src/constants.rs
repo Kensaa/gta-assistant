@@ -53,7 +53,7 @@ lazy_static! {
     pub static ref CAYO_FINGERPRINT_COUNT: u16 = 7;
     pub static ref CAYO_HEADER_POS: HashMap<u32, Region> = {
         let mut m = HashMap::new();
-        m.insert(1080, [449, 60, 1661, 127]);
+        m.insert(1080, [600, 60, 1661, 127]);
         m.insert(1440, [0, 0, 0, 0]);
         m
     };
@@ -95,10 +95,11 @@ lazy_static! {
         );
         m
     };
-    pub static ref CAYO_WAIT_DELAY:Duration = Duration::from_millis(3000);
+    pub static ref CAYO_WAIT_DELAY:Duration = Duration::from_millis(2200);
 
 
     // GENERAL
+    pub static ref PRESS_DURATION: Duration = Duration::from_millis(30);
     pub static ref UPDATE_RATE:u16 = 10;
     pub static ref LOOP_DELAY:Duration = Duration::from_millis(1000 / *UPDATE_RATE as u64);
 }

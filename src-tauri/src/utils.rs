@@ -1,9 +1,9 @@
+use crate::constants;
 use image::{imageops, DynamicImage, ImageReader, RgbImage};
-use image_hasher::HasherConfig;
+use image_hasher::{Hasher, HasherConfig, ImageHash};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use winapi::ctypes::c_int;
 use winapi::um::winuser::{
@@ -87,12 +87,19 @@ pub fn capture_regions(monitor: &Monitor, regions: &[Region]) -> Vec<image::Dyna
         .collect()
 }
 
+fn hash_image(hasher: &Hasher, img: &RgbImage) -> ImageHash {
+    hasher.hash_image(img)
+}
+
 pub fn compare_image(img1: &RgbImage, img2: &RgbImage) -> f64 {
     let hasher = HasherConfig::new().to_hasher();
-    let img1 = DynamicImage::ImageRgb8(img1.clone());
-    let img2 = DynamicImage::ImageRgb8(img2.clone());
-    let hash1 = hasher.hash_image(&img1);
-    let hash2 = hasher.hash_image(&img2);
+    let (hash1, hash2) = thread::scope(|scope| {
+        let hash1_thread = scope.spawn(|| hash_image(&hasher, img1));
+        let hash2_thread = scope.spawn(|| hash_image(&hasher, img2));
+        let hash1 = hash1_thread.join().unwrap();
+        let hash2 = hash2_thread.join().unwrap();
+        (hash1, hash2)
+    });
 
     let distance = hash1.dist(&hash2);
     let similarity = 1.0 - (distance as f64 / (hash1.as_bytes().len() * 8) as f64);
@@ -100,24 +107,32 @@ pub fn compare_image(img1: &RgbImage, img2: &RgbImage) -> f64 {
 }
 
 pub fn find_image_in_array(target: &RgbImage, images: &[RgbImage]) -> usize {
-    let mut best_index = 0;
-    let mut best_score = 0f64;
-    for (index, image) in images.iter().enumerate() {
-        let score = compare_image(target, image);
-        if score > best_score {
-            best_score = score;
-            best_index = index;
+    thread::scope(|scope| {
+        let mut threads = Vec::with_capacity(images.len());
+        for (index, image) in images.iter().enumerate() {
+            threads.push(scope.spawn(move || {
+                let score = compare_image(target, image);
+                (index, score)
+            }))
         }
-        if score == 1f64 {
-            break;
+
+        let mut best_score = 0f64;
+        let mut best_index = 0;
+        for thread in threads {
+            let (index, score) = thread.join().unwrap();
+            if score > best_score {
+                best_score = score;
+                best_index = index;
+            }
+            if score == 1f64 {
+                return index;
+            }
         }
-    }
-    println!();
-    best_index
+        return best_index;
+    })
 }
 
 pub fn press(vk_code: i32) {
-    const PRESS_DURATION: Duration = Duration::from_millis(30);
     fn send(vk_code: i32, down: bool) {
         let extended_keys = vec![
             VK_RCONTROL,
@@ -160,9 +175,9 @@ pub fn press(vk_code: i32) {
         }
     }
     send(vk_code, true);
-    thread::sleep(PRESS_DURATION);
+    thread::sleep(*constants::PRESS_DURATION);
     send(vk_code, false);
-    thread::sleep(PRESS_DURATION);
+    thread::sleep(*constants::PRESS_DURATION);
 }
 
 pub fn relative_array(arr: &[usize]) -> Vec<usize> {
