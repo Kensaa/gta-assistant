@@ -1,11 +1,13 @@
 use gta_assistant::{constants, utils, ThreadStatus};
 use image::RgbImage;
+use log::info;
 use std::{path::Path, thread};
 use tauri::AppHandle;
-use winapi::um::winuser::{VK_RETURN, VK_RIGHT, VK_TAB};
+use winapi::um::winuser::{VK_DOWN, VK_RETURN, VK_RIGHT, VK_TAB};
 
 pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
     thread::spawn(move || {
+        info!("Thread started");
         // INITIALIZATION
         let resolution = utils::get_resolution();
         if !crate::casino::SUPPORTED_RESOLUTIONS.contains(&resolution) {
@@ -24,10 +26,11 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
             .join("casino");
 
         let header_image: RgbImage = utils::load_image(asset_folder.join("header.png"));
-
+        info!("Header image loaded");
         let fingerprints: Vec<RgbImage> = (1..=*constants::CASINO_FINGERPRINT_COUNT)
             .map(|i| utils::load_image(asset_folder.join(i.to_string()).join("full.png")))
             .collect();
+        info!("Fingerprints image loaded");
 
         let parts: Vec<Vec<RgbImage>> = (1..=*constants::CASINO_FINGERPRINT_COUNT)
             .map(|fingerprint| {
@@ -42,6 +45,7 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
                     .collect()
             })
             .collect();
+        info!("fingerprints parts images loaded");
 
         let monitor = utils::get_main_monitor().unwrap();
         loop {
@@ -52,14 +56,14 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
             let header_screenshot = utils::capture_region(&monitor, header_pos).into_rgb8();
             let similarity = utils::compare_image(&header_image, &header_screenshot);
             if similarity > 0.99 {
-                println!("Fingerprint detected ({} header similarity)", similarity);
+                info!("Fingerprint detected ({} header similarity)", similarity);
                 let fingerprint_screenshot =
                     utils::capture_region(&monitor, fingerprint_pos).into_rgb8();
 
                 let fingerprint_index =
                     utils::find_image_in_array(&fingerprint_screenshot, &fingerprints);
 
-                println!("Fingerprint detected: {}", fingerprint_index + 1);
+                info!("Fingerprint index: {}", fingerprint_index + 1);
 
                 let solutions = parts
                     .get(fingerprint_index)
@@ -82,9 +86,10 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
                 let pos_to_check = utils::relative_array(&pos_to_check);
                 println!("relative pos to check: {:?}", pos_to_check);
                 for move_count in pos_to_check {
-                    for _ in 0..move_count {
-                        utils::press(VK_RIGHT);
-                    }
+                    let right_moves = move_count % 2;
+                    let down_moves = move_count / 2;
+                    utils::multiple_press(VK_RIGHT, right_moves);
+                    utils::multiple_press(VK_DOWN, down_moves);
                     utils::press(VK_RETURN);
                 }
                 utils::press(VK_TAB);

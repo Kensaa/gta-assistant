@@ -193,6 +193,11 @@ pub fn press(vk_code: i32) {
     thread::sleep(*constants::PRESS_DURATION);
 }
 
+pub fn multiple_press(key: i32, count: usize) {
+    for _ in 0..count {
+        press(key);
+    }
+}
 pub fn relative_array(arr: &[usize]) -> Vec<usize> {
     let mut result = Vec::new();
     let mut last = 0;

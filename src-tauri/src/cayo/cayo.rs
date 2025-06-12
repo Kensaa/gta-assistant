@@ -7,7 +7,7 @@ use winapi::um::winuser::{VK_DOWN, VK_LEFT, VK_RIGHT};
 
 pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
     thread::spawn(move || {
-        info!("thread started");
+        info!("Thread started");
         let resolution = utils::get_resolution();
         if !crate::cayo::SUPPORTED_RESOLUTIONS.contains(&resolution) {
             utils::err_dialog(
@@ -26,12 +26,12 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
         let parts_pos = constants::CAYO_PARTS_POS.get(&resolution).unwrap();
 
         let header_image = utils::load_image(asset_folder.join("header.png"));
-        info!("header image loaded");
+        info!("Header image loaded");
 
         let fingerprints: Vec<RgbImage> = (1..=*constants::CAYO_FINGERPRINT_COUNT)
             .map(|i| utils::load_image(asset_folder.join(i.to_string()).join("fingerprint.png")))
             .collect();
-        info!("fingerprints image loaded");
+        info!("Fingerprints image loaded");
 
         let parts: Vec<Vec<RgbImage>> = (1..=*constants::CAYO_FINGERPRINT_COUNT)
             .map(|fingerprint| {
@@ -96,25 +96,18 @@ fn move_to(current: usize, target: usize) {
     if target > current {
         if target - current > 4 {
             let move_count = 8 - target + current;
-            multiple_press(VK_LEFT, move_count);
+            utils::multiple_press(VK_LEFT, move_count);
         } else {
             let move_count = target - current;
-            multiple_press(VK_RIGHT, move_count);
+            utils::multiple_press(VK_RIGHT, move_count);
         }
     } else {
         if current - target > 4 {
             let move_count = 8 - current + target;
-            multiple_press(VK_RIGHT, move_count);
+            utils::multiple_press(VK_RIGHT, move_count);
         } else {
             let move_count = current - target;
-            multiple_press(VK_LEFT, move_count);
+            utils::multiple_press(VK_LEFT, move_count);
         }
-    }
-}
-
-fn multiple_press(key: i32, count: usize) {
-    for _ in 0..count {
-        utils::press(key);
-        // MAYBE ADD DELAY
     }
 }

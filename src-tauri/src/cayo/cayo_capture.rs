@@ -39,7 +39,6 @@ pub fn handler(thread_status: ThreadStatus, app_handle: AppHandle) {
             .max()
             .unwrap_or(0)
             + 1;
-        // let mut curr_index = 0;
         thread::sleep(Duration::from_millis(5000));
         loop {
             if !utils::check_thread_status(&thread_status) {
