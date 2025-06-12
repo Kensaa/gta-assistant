@@ -1,5 +1,6 @@
 export type Button = {
     id: string
+    description: string
 } & (
     | {
           type: 'toggle'

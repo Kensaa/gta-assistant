@@ -28,6 +28,7 @@ struct ToggleButton {
     task: LongTask,
     enabled_text: String,  // text to display when the button is enabled
     disabled_text: String, // text to display when the button is disabled
+    description: String,
 }
 
 // A button that can be clicked, starting a thread for a fixed amount of time
@@ -39,6 +40,7 @@ struct TimerButton {
     delay: u16,       // delay in econds
     off_text: String, // text to display when the timer is not running
     on_text: String,  // text to display when the timer is running
+    description: String,
 }
 
 #[derive(Clone, Serialize, Debug)]
@@ -117,12 +119,14 @@ fn main() {
             task: casino::casino::handler,
             enabled_text: "Disable Fingerprints (Casino)".to_string(),
             disabled_text: "Enable Fingerprints (Casino)".to_string(),
+            description: "Solves fingerprints in the Casino Heist".to_string(),
         }),
         Button::Toggle(ToggleButton {
             id: "cayo-fingerprint".to_string(),
             task: cayo::cayo::handler,
             enabled_text: "Disable Fingerprints (Cayo)".to_string(),
             disabled_text: "Enable Fingerprints (Cayo)".to_string(),
+            description: "Solves fingerprints in the Cayo Perico Heist".to_string(),
         }),
     ]);
 
@@ -132,12 +136,15 @@ fn main() {
             task: casino::casino_capture::handler,
             enabled_text: "Disable Casino Capture".to_string(),
             disabled_text: "Enable Casino Capture".to_string(),
-        }),
+            description: "Takes screenshots of the fingerprints in the Casino Heist (you shouldn't enable this unless you were told to do so)".to_string()
+        
+                }),
         Button::Toggle(ToggleButton {
             id: "cayo-capture".to_string(),
             task: cayo::cayo_capture::handler,
             enabled_text: "Disable Cayo Capture".to_string(),
             disabled_text: "Enable Cayo Capture".to_string(),
+            description: "Takes screenshots of the fingerprints in the Cayo Perico Heist (you shouldn't enable this unless you were told to do so)".to_string()
         }),
     ]);
 

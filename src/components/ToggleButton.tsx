@@ -6,7 +6,8 @@ type Props = { type: 'toggle' } & Button
 export default function ToggleButton({
     id,
     enabled_text,
-    disabled_text
+    disabled_text,
+    description
 }: Props) {
     const [state, setState] = useState(false)
     const handleClick = () => {
@@ -19,6 +20,7 @@ export default function ToggleButton({
             <button
                 className={`btn btn-${state ? 'on' : 'off'}`}
                 onClick={handleClick}
+                title={description}
             >
                 {state ? enabled_text : disabled_text}
             </button>

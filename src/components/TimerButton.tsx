@@ -3,7 +3,13 @@ import { invoke } from '@tauri-apps/api/core'
 import { Button } from '../type'
 
 type Props = { type: 'timer' } & Button
-export default function TimerButton({ id, delay, off_text, on_text }: Props) {
+export default function TimerButton({
+    id,
+    delay,
+    off_text,
+    on_text,
+    description
+}: Props) {
     const [running, setRunning] = useState(false)
     const [timer, setTimer] = useState(0)
 
@@ -38,6 +44,7 @@ export default function TimerButton({ id, delay, off_text, on_text }: Props) {
             <button
                 className={`btn btn-${running ? 'on btn-running' : 'off'}`}
                 onClick={handleClick}
+                title={description}
             >
                 {running ? `${on_text} : ${timer}s` : off_text}
             </button>
