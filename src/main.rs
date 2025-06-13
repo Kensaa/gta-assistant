@@ -1,3 +1,4 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod casino;
 mod cayo;
 
@@ -9,6 +10,7 @@ use std::{fs, thread};
 
 use directories::ProjectDirs;
 use fltk::dialog;
+use fltk::image::PngImage;
 use fltk::prelude::ButtonExt;
 use fltk::{
     app,
@@ -18,7 +20,7 @@ use fltk::{
     prelude::{GroupExt, WidgetExt, WindowExt},
     window::Window,
 };
-use gta_assistant::utils::TaskData;
+use gta_assistant::utils::{self, TaskData};
 use gta_assistant::{
     ThreadStatus,
     utils::{Button, ButtonType},
@@ -133,6 +135,8 @@ fn main() {
         .center_screen()
         .with_label("GTA Assistant");
 
+    let image = PngImage::from_data(&utils::Asset::get("assets/icon.png").unwrap().data).unwrap();
+    window.set_icon(Some(image));
     let mut col = Flex::default()
         .with_size(window.w(), window.h())
         .center_of_parent()

@@ -38,7 +38,7 @@ pub struct Button {
 #[derive(Embed)]
 #[folder = "assets"]
 #[prefix = "assets/"]
-struct Asset;
+pub struct Asset;
 
 pub fn check_thread_status(thread_status: &ThreadStatus) -> bool {
     let signal = thread_status.lock().unwrap();
