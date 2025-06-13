@@ -5,7 +5,7 @@ use gta_assistant::{
 use image::RgbImage;
 use log::{debug, error, info};
 use std::{path::Path, thread};
-use winapi::um::winuser::{VK_DOWN, VK_LEFT, VK_RIGHT};
+use windows::Win32::UI::Input::KeyboardAndMouse::{VK_DOWN, VK_LEFT, VK_RIGHT};
 
 pub fn handler(task_data: TaskData) -> TaskResult {
     thread::Builder::new()

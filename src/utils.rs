@@ -6,11 +6,10 @@ use rust_embed::Embed;
 use std::path::{Component, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::{panic, thread};
-use winapi::ctypes::c_int;
-use winapi::um::winuser::{
-    INPUT, INPUT_KEYBOARD, INPUT_u, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY, KEYEVENTF_KEYUP,
-    MAPVK_VK_TO_VSC, MapVirtualKeyA, SendInput, VK_DELETE, VK_DOWN, VK_END, VK_HOME, VK_INSERT,
-    VK_LEFT, VK_NEXT, VK_PAUSE, VK_PRIOR, VK_RCONTROL, VK_RIGHT, VK_UP,
+use windows::Win32::UI::Input::KeyboardAndMouse::{
+    INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY,
+    KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC, MapVirtualKeyA, SendInput, VIRTUAL_KEY, VK_DELETE, VK_DOWN,
+    VK_END, VK_HOME, VK_INSERT, VK_LEFT, VK_NEXT, VK_PAUSE, VK_PRIOR, VK_RCONTROL, VK_RIGHT, VK_UP,
 };
 use xcap::Monitor;
 
@@ -157,8 +156,8 @@ pub fn find_image_in_array(target: &RgbImage, images: &[RgbImage]) -> usize {
     })
 }
 
-pub fn press(vk_code: i32) {
-    fn send(vk_code: i32, down: bool) {
+pub fn press(vk_code: VIRTUAL_KEY) {
+    fn send(vk_code: VIRTUAL_KEY, down: bool) {
         let extended_keys = vec![
             VK_RCONTROL,
             VK_PAUSE,
@@ -173,30 +172,30 @@ pub fn press(vk_code: i32) {
             VK_INSERT,
             VK_DELETE,
         ];
-        let mut flags = if down { 0 } else { KEYEVENTF_KEYUP };
+        let mut flags = if down {
+            KEYBD_EVENT_FLAGS(0)
+        } else {
+            KEYEVENTF_KEYUP
+        };
         if extended_keys.contains(&vk_code) {
             flags |= KEYEVENTF_EXTENDEDKEY;
         }
+        let scan = unsafe { MapVirtualKeyA(vk_code.0 as u32, MAPVK_VK_TO_VSC) };
 
-        let scan = unsafe { MapVirtualKeyA((vk_code & 0xff) as u32, MAPVK_VK_TO_VSC) };
-        let mut union: INPUT_u = unsafe { std::mem::zeroed() };
-        let inner_union = unsafe { union.ki_mut() };
-
-        *inner_union = KEYBDINPUT {
-            wScan: scan as u16,
-            dwFlags: flags,
-            dwExtraInfo: 0,
-            time: 0,
-            wVk: 0,
+        let input = INPUT {
+            r#type: INPUT_KEYBOARD,
+            Anonymous: INPUT_0 {
+                ki: KEYBDINPUT {
+                    wVk: VIRTUAL_KEY(0),
+                    wScan: scan as u16,
+                    dwFlags: flags,
+                    time: 0,
+                    dwExtraInfo: 0,
+                },
+            },
         };
-
-        let mut input = [INPUT {
-            type_: INPUT_KEYBOARD,
-            u: union,
-        }; 1];
-
         unsafe {
-            SendInput(1, input.as_mut_ptr(), size_of::<INPUT>() as c_int);
+            SendInput(&[input], size_of::<INPUT>() as i32);
         }
     }
     send(vk_code, true);
@@ -205,7 +204,7 @@ pub fn press(vk_code: i32) {
     thread::sleep(*constants::PRESS_DURATION);
 }
 
-pub fn multiple_press(key: i32, count: usize) {
+pub fn multiple_press(key: VIRTUAL_KEY, count: usize) {
     for _ in 0..count {
         press(key);
     }

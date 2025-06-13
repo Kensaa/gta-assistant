@@ -8,7 +8,7 @@ use gta_assistant::{
     constants,
     utils::{self, TaskData, TaskResult},
 };
-use winapi::um::winuser::{VK_DOWN, VK_RIGHT, VK_UP};
+use windows::Win32::UI::Input::KeyboardAndMouse::{VK_DOWN, VK_RIGHT, VK_UP};
 
 pub fn handler(task_data: TaskData) -> TaskResult {
     thread::Builder::new()
