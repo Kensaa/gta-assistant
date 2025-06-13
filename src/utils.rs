@@ -1,26 +1,43 @@
 use crate::constants;
-use image::{imageops, DynamicImage, ImageReader, RgbImage};
+use image::{DynamicImage, ImageReader, RgbImage, imageops};
 use image_hasher::{Hasher, HasherConfig, ImageHash};
-use log::{error, info};
+use log::error;
 use rust_embed::Embed;
 use std::path::{Component, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::{panic, thread};
-use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use winapi::ctypes::c_int;
 use winapi::um::winuser::{
-    INPUT_u, MapVirtualKeyA, SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY,
-    KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC, VK_DELETE, VK_DOWN, VK_END, VK_HOME, VK_INSERT, VK_LEFT,
-    VK_NEXT, VK_PAUSE, VK_PRIOR, VK_RCONTROL, VK_RIGHT, VK_UP,
+    INPUT, INPUT_KEYBOARD, INPUT_u, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY, KEYEVENTF_KEYUP,
+    MAPVK_VK_TO_VSC, MapVirtualKeyA, SendInput, VK_DELETE, VK_DOWN, VK_END, VK_HOME, VK_INSERT,
+    VK_LEFT, VK_NEXT, VK_PAUSE, VK_PRIOR, VK_RCONTROL, VK_RIGHT, VK_UP,
 };
 use xcap::Monitor;
 
 pub type ThreadStatus = Arc<Mutex<bool>>;
 pub type Region = [u32; 4];
 pub type Resolution = (u32, u32);
+pub struct TaskData {
+    pub thread_status: ThreadStatus,
+    pub button: Button,
+}
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub enum ButtonType {
+    Toggle,
+    Timer(u32),
+}
+
+pub type TaskResult = thread::JoinHandle<()>;
+#[derive(Clone, Hash, PartialEq, Eq)]
+pub struct Button {
+    pub task: fn(TaskData) -> TaskResult,
+    pub enabled_text: &'static str,
+    pub disabled_text: &'static str,
+    pub btn_type: ButtonType,
+}
 
 #[derive(Embed)]
-#[folder = "../assets"]
+#[folder = "assets"]
 #[prefix = "assets/"]
 struct Asset;
 
@@ -37,7 +54,9 @@ pub fn get_main_monitor() -> Result<Monitor, String> {
             return Err(err.to_string());
         }
     };
-    let main_monitor = monitors.into_iter().find(|monitor| monitor.is_primary());
+    let main_monitor = monitors
+        .into_iter()
+        .find(|monitor| monitor.is_primary().unwrap());
     let main_monitor = match main_monitor {
         Some(monitor) => Ok(monitor),
         None => {
@@ -49,14 +68,7 @@ pub fn get_main_monitor() -> Result<Monitor, String> {
 
 pub fn get_resolution() -> Resolution {
     let monitor = get_main_monitor().unwrap();
-    return (monitor.width(), monitor.height());
-}
-
-pub fn err_dialog(app: &tauri::AppHandle, message: &str) {
-    app.dialog()
-        .message(message)
-        .kind(MessageDialogKind::Error)
-        .blocking_show();
+    return (monitor.width().unwrap(), monitor.height().unwrap());
 }
 
 pub fn capture_region(monitor: &Monitor, region: &[u32; 4]) -> image::DynamicImage {
@@ -210,7 +222,6 @@ pub fn relative_array(arr: &[usize]) -> Vec<usize> {
 
 pub fn load_image(path: PathBuf) -> RgbImage {
     let mut components = path.components();
-    info!("loading image : {}", path.display());
     match components.next() {
         Some(Component::Normal(s)) if s.to_str().unwrap() == "assets" => {
             let asset_path = path
