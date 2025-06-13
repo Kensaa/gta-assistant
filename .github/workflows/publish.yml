@@ -42,7 +42,7 @@ jobs:
     permissions: write-all
     runs-on: windows-latest
     needs: check-version
-    if: ${{ needs.check-version.outputs.project_version != needs.check-version.outputs.tag }}
+    if: ${{ needs.check-version.outputs.project_version != needs.check-version.outputs.tag || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: checkout
         uses: actions/checkout@v4

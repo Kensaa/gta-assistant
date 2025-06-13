@@ -52,7 +52,10 @@ fn main() {
         dir.to_path_buf()
     };
     fs::create_dir_all(&log_folder).expect("Failed to create log directory");
-
+    let log_file = log_folder.join("gta-assistant.log");
+    if fs::exists(&log_file).unwrap() {
+        fs::remove_file(&log_file).unwrap();
+    }
     let log_format_pattern = Box::new(PatternEncoder::new(
         "[{d(%Y-%m-%d %H:%M:%S)}][{M}][{T}][{h({l})}] {m}{n}",
     ));
@@ -61,10 +64,11 @@ fn main() {
             .encoder(log_format_pattern.clone())
             .build(),
     );
+
     let file_appender = Box::new(
         FileAppender::builder()
             .encoder(log_format_pattern)
-            .build(log_folder.join("gta-assistant.log"))
+            .build(log_file)
             .unwrap(),
     );
     let logger_config = Config::builder()
