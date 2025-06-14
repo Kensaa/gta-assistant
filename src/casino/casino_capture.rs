@@ -2,6 +2,7 @@ use gta_assistant::{
     constants,
     utils::{self, TaskData, TaskResult},
 };
+use log::info;
 use std::{
     fs::{self},
     thread,
@@ -12,6 +13,7 @@ pub fn handler(task_data: TaskData) -> TaskResult {
     thread::Builder::new()
         .name("casino capture".to_string())
         .spawn(move || {
+            info!("Thread started");
             let resolution = utils::get_resolution();
             if !crate::casino::SUPPORTED_RESOLUTIONS.contains(&resolution) {
                 panic!("Casino Capture does not support your resolution");
@@ -94,6 +96,7 @@ pub fn handler(task_data: TaskData) -> TaskResult {
                 }
                 thread::sleep(Duration::from_millis(5000));
             }
+            info!("Stopping thread");
         })
         .unwrap()
 }

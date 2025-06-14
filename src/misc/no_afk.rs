@@ -20,6 +20,7 @@ pub fn handler(task_data: TaskData) -> TaskResult {
                 utils::press(VK_S);
                 thread::sleep(sleep_duration);
             }
+            info!("Stopping thread");
         })
         .unwrap()
 }

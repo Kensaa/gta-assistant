@@ -102,6 +102,7 @@ pub fn handler(task_data: TaskData) -> TaskResult {
 
                 thread::sleep(*constants::LOOP_DELAY);
             }
+            info!("Stopping thread");
         })
         .unwrap()
 }
