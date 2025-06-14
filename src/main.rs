@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod casino;
 mod cayo;
+mod misc;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -106,6 +107,12 @@ fn main() {
                 btn_type: ButtonType::Toggle,
             },
         ],
+        vec![Button {
+            disabled_text: "Enable No AFK",
+            enabled_text: "Disable No AFK",
+            task: misc::no_afk::handler,
+            btn_type: ButtonType::Toggle,
+        }],
         vec![
             Button {
                 disabled_text: "Enable Casino Capture",
