@@ -92,7 +92,10 @@ fn main() {
         .unwrap();
     log4rs::init_config(logger_config).unwrap();
     // APP INIT
-    let buttons = vec![
+
+    let capture_enabled = std::env::var("ASSISTANT_CAPTURE").unwrap_or("0".to_string()) != "0"
+        || cfg!(debug_assertions);
+    let mut buttons = vec![
         vec![
             Button {
                 disabled_text: "Enable Fingerprints (Casino)",
@@ -113,7 +116,9 @@ fn main() {
             task: misc::no_afk::handler,
             btn_type: ButtonType::Toggle,
         }],
-        vec![
+    ];
+    if capture_enabled {
+        buttons.push(vec![
             Button {
                 disabled_text: "Enable Casino Capture",
                 enabled_text: "Disable Casino Capture",
@@ -126,8 +131,8 @@ fn main() {
                 task: cayo::cayo_capture::handler,
                 btn_type: ButtonType::Toggle,
             },
-        ],
-    ];
+        ]);
+    }
     let app_state = Rc::new(AppState {
         running_threads: Mutex::new(HashMap::new()),
     });
